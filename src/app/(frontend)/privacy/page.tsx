@@ -1,87 +1,157 @@
-import { dict } from '@/lib/i18n'
+import type { Metadata } from 'next'
+import Link from 'next/link'
+
+export const metadata: Metadata = {
+  title: 'Privacy Policy — US Policy Brief',
+  description: 'Learn how US Policy Brief collects, protects, and manages reader data and analytics in accordance with global privacy standards.',
+}
 
 export default async function PrivacyPage() {
-
   return (
-    <div className="bg-[var(--bg-primary)] min-h-screen py-24 px-4 sm:px-6 relative overflow-hidden">
-      {/* Background dot matrix */}
-      <div
-        className="absolute inset-0 opacity-[0.4] pointer-events-none"
-        style={{
-          backgroundImage: 'radial-gradient(var(--border) 1px, transparent 1px)',
-          backgroundSize: '24px 24px',
-        }}
-      />
-
-      <div className="max-w-[800px] mx-auto relative z-10">
-        <div className="flex items-center gap-4 mb-12">
-          <div className="w-[4px] h-10 flex-shrink-0" style={{ background: 'var(--accent-red)' }} />
-          <h1 className="font-display text-4xl md:text-5xl font-black tracking-tighter" style={{ color: 'var(--text-primary)' }}>
-            {dict.privacyPolicy}
-          </h1>
+    <div className="bbc-container py-8 md:py-12 max-w-[860px]">
+      {/* ── HEADER / BREADCRUMB ──────────────────────── */}
+      <div className="border-b-2 border-[var(--ink)] pb-4 mb-8">
+        <div className="flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-wider text-[var(--bbc-red)] mb-2">
+          <span>US Policy Brief</span>
+          <span>/</span>
+          <span>Legal & Compliance</span>
         </div>
+        <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-[var(--ink)] leading-tight">
+          Privacy Policy
+        </h1>
+        <div className="mt-3 flex items-center gap-4 text-xs font-mono text-[var(--muted)]">
+          <span>EFFECTIVE DATE: JANUARY 1, 2026</span>
+          <span>·</span>
+          <span>LAST REVIEWED: AUGUST 2026</span>
+        </div>
+      </div>
+
+      {/* ── POLICY CONTENT PROSE ─────────────────────── */}
+      <div className="space-y-8 text-base text-[#222222] leading-relaxed">
         
-        <div className="space-y-12 text-lg leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-          
-          <section className="relative">
-             <div className="absolute -left-10 top-0 bottom-0 w-px bg-white/5 hidden md:block" />
-            <h2 className="font-mono font-bold text-xs uppercase tracking-[0.3em] mb-4" style={{ color: 'var(--accent-red)' }}>1. Introduction</h2>
-            <p>
-              Welcome to US Policy Brief. We value your privacy and are committed to protecting your personal data. This policy explains how we collect and use information when you visit our platform.
-            </p>
-          </section>
+        {/* Section 1 */}
+        <section className="border-b border-[var(--soft-line)] pb-6">
+          <h2 className="font-serif text-xl md:text-2xl font-bold text-[var(--ink)] mb-3">
+            1. Overview and Commitment to Reader Privacy
+          </h2>
+          <p className="mb-3">
+            US Policy Brief (<em>uspolicybrief.com</em>) is committed to protecting the privacy and fundamental rights of our readers and sources. This Privacy Policy sets out the basis on which any personal data we collect from you, or that you provide to us, will be processed and safeguarded.
+          </p>
+          <p>
+            We adhere to the core principle of data minimization: we collect only the minimum amount of information necessary to deliver independent journalism, optimize performance, and maintain platform security.
+          </p>
+        </section>
 
-          <section className="p-10 border border-[var(--border)] bg-[var(--bg-card)] relative">
-             {/* Decorative dot matrix corner */}
-             <div
-              className="absolute top-0 right-0 w-20 h-20 opacity-10 pointer-events-none"
-              style={{
-                backgroundImage: 'radial-gradient(var(--accent-red) 1px, transparent 1px)',
-                backgroundSize: '8px 8px',
-              }}
-            />
-            <h2 className="font-display text-2xl font-bold mb-6 flex items-center gap-4" style={{ color: 'var(--text-primary)' }}>
-              <span className="w-8 h-8 flex items-center justify-center bg-[#e8002d]/10 text-xl border border-[var(--accent-red)]/20">📊</span> 
-              {dict.dataCollection}
-            </h2>
-            <div className="space-y-4">
-              <p>
-                {dict.privacyText}
+        {/* Section 2 */}
+        <section className="border-b border-[var(--soft-line)] pb-6">
+          <h2 className="font-serif text-xl md:text-2xl font-bold text-[var(--ink)] mb-3">
+            2. Information We Collect
+          </h2>
+          <div className="space-y-4">
+            <div>
+              <h3 className="font-sans font-bold text-sm text-[var(--ink)] uppercase tracking-wider mb-1">
+                A. Voluntarily Provided Information
+              </h3>
+              <p className="text-sm text-[var(--muted)]">
+                When you contact our newsroom, subscribe to editorial newsletters, submit comments, or report an error, you may provide your name, email address, and message contents. We use this information solely to respond to your specific request.
               </p>
-              <div className="pt-4 border-t border-[var(--border)]">
-                <p className="font-mono text-[10px] uppercase tracking-widest leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-                  NOTE: Google Analytics helps us see which regions are most interested in our reports and which topics are trending. This data is anonymized.
-                </p>
-              </div>
             </div>
-          </section>
-
-          <section>
-            <h2 className="font-mono font-bold text-xs uppercase tracking-[0.3em] mb-4" style={{ color: 'var(--accent-red)' }}>2. Cookies</h2>
-            <p>
-              We use functional cookies to ensure the website loads as quickly as possible and your preferences are saved. You can disable cookies in your browser settings at any time.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="font-mono font-bold text-xs uppercase tracking-[0.3em] mb-4" style={{ color: 'var(--accent-red)' }}>3. Newsletter & Comments</h2>
-            <p>
-              If you choose to subscribe to our newsletter or comment on articles, we collect your email address purely for communication purposes. We will never sell your data to third parties or political organizations.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="font-mono font-bold text-xs uppercase tracking-[0.3em] mb-4" style={{ color: 'var(--accent-red)' }}>4. Your Rights</h2>
-            <p>
-              You have the right to access, correct, or delete any personal information we hold about you. For any privacy-related requests, please contact our data protection officer at <span className="font-bold border-b border-[var(--accent-red)]" style={{ color: 'var(--text-primary)' }}>privacy@uspolicybrief.com</span>.
-            </p>
-          </section>
-
-          <div className="pt-16 border-t border-[var(--border)] flex justify-between items-center text-xs font-mono tracking-widest" style={{ color: 'var(--text-muted)' }}>
-            <span>LAST UPDATED: APRIL 16, 2026</span>
-            <div className="w-8 h-[1px] bg-[var(--accent-red)]" />
+            <div>
+              <h3 className="font-sans font-bold text-sm text-[var(--ink)] uppercase tracking-wider mb-1">
+                B. Automated Technical & Analytics Data
+              </h3>
+              <p className="text-sm text-[var(--muted)]">
+                When you access our platform, our servers and analytics providers may collect anonymized telemetry data, including your IP address (anonymized/truncated), browser type, referring URLs, operating system, pages viewed, and access timestamps.
+              </p>
+            </div>
           </div>
-        </div>
+        </section>
+
+        {/* Section 3 */}
+        <section className="border-b border-[var(--soft-line)] pb-6">
+          <h2 className="font-serif text-xl md:text-2xl font-bold text-[var(--ink)] mb-3">
+            3. Cookies and Tracking Technologies
+          </h2>
+          <p className="mb-3">
+            We use essential and analytics cookies to enhance site navigation and understand readership patterns:
+          </p>
+          <ul className="list-disc pl-6 space-y-2 text-sm text-[var(--muted)]">
+            <li>
+              <strong>Essential Cookies:</strong> Required for the core technical operation of our content management systems and security mechanisms.
+            </li>
+            <li>
+              <strong>Performance & Analytics Cookies:</strong> We utilize Google Analytics to analyze aggregated reader traffic, reading duration, and regional readership trends. All IP addresses are anonymized.
+            </li>
+            <li>
+              <strong>Preference Cookies:</strong> Store user interface selections such as text size or display modes.
+            </li>
+          </ul>
+          <p className="mt-3 text-sm text-[var(--muted)]">
+            You can configure your browser to reject cookies or alert you when cookies are being sent. Note that some site features may not function properly without essential cookies.
+          </p>
+        </section>
+
+        {/* Section 4 */}
+        <section className="border-b border-[var(--soft-line)] pb-6">
+          <h2 className="font-serif text-xl md:text-2xl font-bold text-[var(--ink)] mb-3">
+            4. Third-Party Services and Advertising
+          </h2>
+          <p className="mb-3">
+            To sustain our independent reporting operations, we may display programmatic news widgets and sponsor messages provided by third-party advertising partners (such as Adskeeper).
+          </p>
+          <p className="text-sm text-[var(--muted)]">
+            These third-party vendors may use cookies or web beacons to serve advertisements based on your prior visits to this and other websites. We do not share personally identifiable information with third-party advertisers.
+          </p>
+        </section>
+
+        {/* Section 5 */}
+        <section className="border-b border-[var(--soft-line)] pb-6">
+          <h2 className="font-serif text-xl md:text-2xl font-bold text-[var(--ink)] mb-3">
+            5. Source Confidentiality and Whistleblower Data
+          </h2>
+          <p className="mb-3">
+            US Policy Brief maintains dedicated encrypted channels (including PGP mail and Signal) for confidential tips and source communications. Information received via these channels is subject to strict journalistic privilege and rigorous newsroom source-protection protocols.
+          </p>
+          <p className="text-sm text-[var(--muted)]">
+            We do not store source identification records on unencrypted internet-facing servers. For more details on secure communications, visit our{' '}
+            <Link href="/contact" className="text-[var(--bbc-red)] underline font-bold">
+              Secure Tip Desk
+            </Link>
+            .
+          </p>
+        </section>
+
+        {/* Section 6 */}
+        <section className="border-b border-[var(--soft-line)] pb-6">
+          <h2 className="font-serif text-xl md:text-2xl font-bold text-[var(--ink)] mb-3">
+            6. Your Rights (GDPR, CCPA & Global Regulations)
+          </h2>
+          <p className="mb-3">
+            Depending on your jurisdiction, you have statutory rights concerning your personal data:
+          </p>
+          <ul className="list-disc pl-6 space-y-2 text-sm text-[var(--muted)]">
+            <li><strong>Right of Access:</strong> Request a copy of the personal data we hold about you.</li>
+            <li><strong>Right to Rectification:</strong> Request correction of inaccurate or incomplete data.</li>
+            <li><strong>Right to Erasure:</strong> Request deletion of your personal data from our contact databases.</li>
+            <li><strong>Right to Object / Opt-out:</strong> Object to processing or unsubscribe from newsletters at any time.</li>
+          </ul>
+        </section>
+
+        {/* Section 7 */}
+        <section className="p-6 bg-[var(--surface)] border border-[var(--line)]">
+          <h2 className="font-serif text-xl font-bold text-[var(--ink)] mb-2">
+            7. Contact Our Data Protection Officer
+          </h2>
+          <p className="text-sm text-[var(--muted)] leading-relaxed mb-4">
+            If you have questions regarding this Privacy Policy, wish to exercise your privacy rights, or have inquiries regarding data protection practices:
+          </p>
+          <div className="text-xs font-mono space-y-1">
+            <div><span className="font-bold text-[var(--ink)]">EMAIL:</span> privacy@uspolicybrief.com</div>
+            <div><span className="font-bold text-[var(--ink)]">LEGAL DESK:</span> legal@uspolicybrief.com</div>
+            <div><span className="font-bold text-[var(--ink)]">LOCATION:</span> Washington, D.C., United States</div>
+          </div>
+        </section>
+
       </div>
     </div>
   )

@@ -1,30 +1,33 @@
 #!/bin/bash
-# deploy.sh — Run this on your VPS to deploy/update US Policy Brief
-# Usage: bash deploy.sh
+# deploy.sh — US Policy Brief VPS Deployment Script
 set -e
 
-echo "🚀 Deploying US Policy Brief..."
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
 
-# Pull latest code
-git pull origin main
+echo -e "${GREEN}🚀 Deploying US Policy Brief...${NC}"
 
-# Build the new image
-echo "🔨 Building Docker image..."
-docker compose -f docker-compose.prod.yml build app
+# 1. Pull latest code
+echo "📥 Pulling latest code..."
+git pull origin main || { echo -e "${RED}❌ Error: git pull failed.${NC}"; exit 1; }
 
-# Restart app with zero-downtime (DB stays up)
-echo "♻️  Restarting app container..."
-docker compose -f docker-compose.prod.yml up -d --no-deps app
+# 2. Build production Next.js app
+echo "🔨 Building production Next.js app..."
+NODE_OPTIONS="--max-old-space-size=1536" npm run build
 
-# Remove dangling images to save disk space
-docker image prune -f
+# 3. Reload PM2 process
+echo "♻️  Reloading PM2 process..."
+pm2 reload uspolicybrief
 
-# Warm the cache on startup
-echo "🔥 warming cache..."
-sleep 5
-curl -s -o /dev/null http://localhost/ || true
-sleep 2
-curl -s -o /dev/null http://localhost/ || true
+# 4. Health Check
+echo "🔥 Checking application health..."
+sleep 3
+if curl -s -f -H "Host: uspolicybrief.com" http://localhost:3002 > /dev/null; then
+    echo -e "${GREEN}✓ Application updated successfully!${NC}"
+else
+    echo -e "${RED}⚠️ Warning: Health check returned non-200. Check pm2 logs uspolicybrief${NC}"
+fi
 
-echo "✅ Deployment complete!"
-echo "📋 Logs: docker compose -f docker-compose.prod.yml logs -f app"
+echo -e "${GREEN}✅ Deployment complete!${NC}"
+

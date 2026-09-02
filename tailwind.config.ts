@@ -9,6 +9,14 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        'bbc-red': 'var(--bbc-red)',
+        ink: 'var(--ink)',
+        muted: 'var(--muted)',
+        quiet: 'var(--quiet)',
+        line: 'var(--line)',
+        'soft-line': 'var(--soft-line)',
+        surface: 'var(--surface)',
+        white: 'var(--white)',
         'bg-primary': 'var(--bg-primary)',
         'bg-surface': 'var(--bg-surface)',
         'bg-card': 'var(--bg-card)',
@@ -24,19 +32,19 @@ const config: Config = {
         'border-subtle': 'var(--border-subtle)',
       },
       fontFamily: {
-        display: ['Public Sans', 'Inter', 'system-ui', 'sans-serif'],
-        serif: ['Public Sans', 'Inter', 'system-ui', 'sans-serif'],
-        'source-serif': ['Public Sans', 'Inter', 'system-ui', 'sans-serif'],
-        sans: ['Public Sans', 'Inter', 'system-ui', 'sans-serif'],
-        mono: ['IBM Plex Mono', 'monospace'],
+        display: ['Georgia', '"Times New Roman"', 'serif'],
+        serif: ['Georgia', '"Times New Roman"', 'serif'],
+        'source-serif': ['Georgia', '"Times New Roman"', 'serif'],
+        sans: ['Arial', 'Helvetica', 'sans-serif'],
+        mono: ['monospace'],
       },
       typography: {
         DEFAULT: {
           css: {
-            color: 'var(--text-primary)',
-            fontFamily: 'Public Sans, Inter, system-ui, sans-serif',
-            fontSize: '17px',
-            lineHeight: '1.75',
+            color: 'var(--ink)',
+            fontFamily: 'Georgia, "Times New Roman", serif',
+            fontSize: '18px',
+            lineHeight: '1.8',
           },
         },
       },

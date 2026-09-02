@@ -218,8 +218,8 @@ export function InfiniteArticleScroll({ initialArticle, initialRelated }: Infini
                     {article.content ? (
                       <RichText
                         content={article.content}
-                        adWidgetId="2043077"
-                        secondAdWidgetId="2044156"
+                        adWidgetId="2076626"
+                        secondAdWidgetId="2076626"
                       />
                     ) : (
                       <p className="text-xl leading-relaxed mt-4 italic opacity-50">
@@ -228,8 +228,8 @@ export function InfiniteArticleScroll({ initialArticle, initialRelated }: Infini
                     )}
                   </div>
 
-                  {/* Under-article Native Recommendations Widget (ID: 2043079 - Desktop Only) */}
-                  <AdskeeperWidget widgetId="2043079" onlyShowOn="desktop" className="hidden lg:block my-4" />
+                  {/* Under-article Native Recommendations Widget (ID: 2076625 - Desktop Only) */}
+                  <AdskeeperWidget widgetId="2076625" onlyShowOn="desktop" className="hidden lg:block my-4" />
 
                   {/* Related Articles — inside main column so sidebar stays visible */}
                   {index === 0 && initialRelated && initialRelated.length > 0 && (
@@ -253,7 +253,7 @@ export function InfiniteArticleScroll({ initialArticle, initialRelated }: Infini
                   <aside className="lg:col-span-4">
                     <div className="sticky top-24">
                       <AdskeeperWidget
-                        widgetId="2043076"
+                        widgetId="2076627"
                         adType="sidebar"
                         onlyShowOn="desktop"
                       />
@@ -273,7 +273,7 @@ export function InfiniteArticleScroll({ initialArticle, initialRelated }: Infini
       {/* Feed Widget — rendered ONCE at the very bottom, outside the article loop */}
       {!hasMore && (
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6">
-          <AdskeeperWidget widgetId="2043075" />
+          <AdskeeperWidget widgetId="2076625" />
         </div>
       )}
     </div>

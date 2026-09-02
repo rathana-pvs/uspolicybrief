@@ -1,317 +1,257 @@
-import { dict } from '@/lib/i18n'
 import type { Metadata } from 'next'
-import Image from 'next/image'
+import Link from 'next/link'
 
 export const metadata: Metadata = {
   title: 'About Us — US Policy Brief',
-  description: 'Independent news you can trust. Learn about our mission, editorial standards, and our commitment to truth.',
+  description: 'Authoritative, independent reporting on US policy, governance, legislation, defense, and global affairs. Learn about our mission and editorial standards.',
 }
 
 export default async function AboutPage() {
   const stats = [
-    { number: '15+', label: 'Years of Independent Reporting' },
-    { number: '200K', label: 'Daily Readers' },
-    { number: '12', label: 'Countries Covered' },
-    { number: '0', label: 'Political Affiliations' },
+    { number: '15+', label: 'Years of Reporting' },
+    { number: '200K+', label: 'Daily Readers' },
+    { number: '40+', label: 'Policy Beats' },
+    { number: '100%', label: 'Editorial Independence' },
   ]
 
-  const values = [
+  const standards = [
     {
-      icon: '⚖️',
+      num: '01',
       title: 'Uncompromising Accuracy',
-      body: 'Every story undergoes a rigorous three-stage verification process before publication. We would rather be last and right than first and wrong.',
+      body: 'Every report undergoes multi-tier verification before publication. We prioritize rigorous factual validation over rapid sensationalism.',
     },
     {
-      icon: '🔒',
+      num: '02',
       title: 'Editorial Independence',
-      body: 'We accept zero funding from political parties, governments, or PACs. Our revenue comes exclusively from our readership and advertising.',
+      body: 'We accept zero funding from political parties, PACs, or government agencies. Our coverage remains steadfastly independent and non-partisan.',
     },
     {
-      icon: '🌍',
-      title: 'Global Context',
-      body: 'No event occurs in isolation. We connect local developments to geopolitical forces, giving readers the full picture.',
+      num: '03',
+      title: 'Authoritative Policy Analysis',
+      body: 'We delve into complex legislative drafts, judicial opinions, and executive actions to explain the real-world implications for citizens.',
     },
     {
-      icon: '🔍',
-      title: 'Radical Transparency',
-      body: 'We publish source documents, explain our methodology, and promptly correct errors with public notices.',
+      num: '04',
+      title: 'Transparent Sourcing & Corrections',
+      body: 'We cite primary documents, disclose research methodologies, and publish clear, prominent correction notices whenever inaccuracies occur.',
     },
     {
-      icon: '🗝️',
-      title: 'Source Protection',
-      body: 'We have a sacred obligation to those who trust us with sensitive information. Our secure infrastructure protects our sources absolutely.',
+      num: '05',
+      title: 'Ironclad Source Protection',
+      body: 'We maintain encrypted whistleblower infrastructure to protect whistleblowers, public servants, and confidential sources worldwide.',
     },
     {
-      icon: '📊',
-      title: 'Data-Driven Analysis',
-      body: 'We believe in showing our work. Our data journalism team makes complex policy and electoral data accessible and understandable.',
+      num: '06',
+      title: 'Global Geopolitical Context',
+      body: 'American policy does not occur in a vacuum. We connect domestic governance with worldwide alliances, markets, and defense developments.',
     },
   ]
 
   const leadership = [
-    { role: 'Editor-in-Chief', name: 'Dr. Sarah Al-Mansoor', bio: 'Former senior foreign correspondent with 18 years covering conflict and policy across the Middle East and Washington.' },
-    { role: 'Managing Editor', name: 'Marcus Vance', bio: 'Award-winning investigative reporter specializing in campaign finance, political influence, and corporate lobbying.' },
-    { role: 'Head of Data & Analysis', name: 'Elena Rostova', bio: 'Data journalist with a background in macroeconomic modeling, leading our polling aggregation and forecasting desk.' },
-    { role: 'Senior Political Analyst', name: 'David Chen', bio: 'Author and veteran Capitol Hill correspondent with deep sources across congressional leadership and federal agencies.' },
+    {
+      role: 'Editor-in-Chief',
+      name: 'Dr. Sarah Al-Mansoor',
+      bio: 'Veteran foreign policy correspondent with 18 years covering international diplomacy, defense, and congressional affairs.',
+    },
+    {
+      role: 'Managing Editor',
+      name: 'Marcus Vance',
+      bio: 'Award-winning investigative reporter specializing in campaign finance, legislative lobbying, and regulatory policy.',
+    },
+    {
+      role: 'Head of Data & Analysis',
+      name: 'Elena Rostova',
+      bio: 'Data journalist specializing in macroeconomic forecasting, voting pattern aggregation, and legislative tracking desks.',
+    },
+    {
+      role: 'Senior Congressional Analyst',
+      name: 'David Chen',
+      bio: 'Author and Capitol Hill reporter with deep sourcing across House and Senate committees and federal regulatory agencies.',
+    },
   ]
 
   const timeline = [
-    { year: '2010', event: 'Founded by a collective of independent journalists committed to impartial political coverage.' },
-    { year: '2013', event: 'Launched the Regional Reporting Bureau, expanding coverage across Southeast Asia.' },
-    { year: '2016', event: 'Won the South-East Asia Press Freedom Award for investigative reporting on electoral irregularities.' },
-    { year: '2019', event: 'Introduced bilingual coverage, expanding the reach to a new generation of readers.' },
-    { year: '2022', event: 'Reached 100,000 daily active readers. Launched our dedicated Data & Analysis desk.' },
-    { year: '2025', event: 'Launched our digital platform, bringing uspolicybrief.com to readers worldwide.' },
+    {
+      year: '2010',
+      title: 'Newsroom Founded',
+      event: 'Established by a collective of investigative journalists committed to rigorous, non-partisan policy analysis.',
+    },
+    {
+      year: '2014',
+      title: 'Congressional Intelligence Desk',
+      event: 'Expanded dedicated coverage to Capitol Hill committee hearings, federal agency rulemaking, and defense appropriations.',
+    },
+    {
+      year: '2018',
+      title: 'Global Policy Network',
+      event: 'Launched regional bureaus connecting Washington policy decisions with international security and economic impacts.',
+    },
+    {
+      year: '2022',
+      title: 'Data & Forecasting Desk',
+      event: 'Introduced live legislative trackers, election data analysis, and open-source intelligence reporting.',
+    },
+    {
+      year: '2025',
+      title: 'Digital Platform Relaunch',
+      event: 'Upgraded digital infrastructure to deliver real-time breaking briefs, multi-format explainers, and live coverage to 200,000+ daily readers.',
+    },
   ]
 
   return (
-    <div className="bg-[var(--bg-primary)] text-[var(--text-primary)] min-h-screen relative overflow-hidden">
-      
-      {/* Glow Effects */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-[var(--accent-red)]/5 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] rounded-full bg-[var(--accent-red)]/5 blur-[120px] pointer-events-none" />
+    <div className="bbc-container category-page">
+      {/* ── HEADER BLOCK (Matching Category Title Block) ── */}
+      <header className="category-title-block">
+        <span className="story-kicker">US Policy Brief · Independent Journalism</span>
+        <h1 className="category-title">About Us</h1>
+        <p className="category-description">
+          Authoritative reporting and non-partisan analysis on US policy, congress, governance, and global affairs.
+        </p>
+      </header>
 
-      {/* ── HERO SECTION ─────────────────────────────── */}
-      <section className="relative pt-24 pb-20 md:pt-36 md:pb-28 max-w-[1280px] mx-auto px-4 sm:px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          <div className="lg:col-span-7 flex flex-col items-start text-left">
-            
-            {/* Tag Badge */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[var(--accent-red)]/20 bg-[var(--accent-red)]/5 mb-8">
-              <span className="w-2 h-2 rounded-full bg-[var(--accent-red)] animate-pulse" />
-              <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--accent-red)]">
-                ESTABLISHED 2010 · INDEPENDENT JOURNALISM
-              </span>
+      {/* ── STATS BAR ─────────────────────────────────── */}
+      <section className="grid grid-cols-2 md:grid-cols-4 gap-4 py-6 border-b border-[var(--line)] mb-10">
+        {stats.map((stat, i) => (
+          <div key={i} className="p-4 bg-[var(--surface)] border-l-4 border-[var(--bbc-red)]">
+            <div className="font-serif text-3xl md:text-4xl font-bold text-[var(--bbc-red)] leading-none mb-1">
+              {stat.number}
             </div>
-
-            <h1 className="font-display font-extrabold tracking-tight leading-[0.9] mb-8 text-[clamp(44px,8vw,90px)]">
-              Truth in <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--accent-red)] to-indigo-400">Reporting</span>,
-              <br />Power to the <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-[var(--accent-red)]">People</span>.
-            </h1>
-            
-            <p className="text-lg md:text-xl max-w-2xl leading-relaxed text-[var(--text-secondary)] mb-10 font-normal opacity-90">
-              US Policy Brief delivers independent, data-driven political coverage. We hold power to account so that citizens can hold power to the light.
-            </p>
-
-            <div className="flex flex-wrap gap-4">
-              <a 
-                href="/contact" 
-                className="px-8 py-3.5 rounded-lg font-mono font-bold text-xs uppercase tracking-wider bg-[var(--accent-red)] text-white hover:bg-[var(--accent-red)]/90 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-[var(--accent-red)]/20"
-              >
-                {dict.getInTouch}
-              </a>
-              <a 
-                href="#standards" 
-                className="px-8 py-3.5 rounded-lg font-mono font-bold text-xs uppercase tracking-wider border border-[var(--border)] hover:border-[var(--accent-red)] hover:bg-[var(--bg-hover)] text-[var(--text-primary)] transition-all hover:scale-[1.02] active:scale-[0.98]"
-              >
-                {dict.editorialStandards}
-              </a>
-            </div>
-
-          </div>
-
-          {/* Interactive Hero Graphical Element */}
-          <div className="lg:col-span-5 relative h-[380px] lg:h-[450px] w-full rounded-2xl border border-[var(--border)] bg-[var(--bg-surface)]/40 backdrop-blur-md overflow-hidden flex flex-col justify-between p-8 group">
-            {/* Grid Pattern Background */}
-            <div className="absolute inset-0 opacity-[0.15] bg-[radial-gradient(var(--accent-red)_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none" />
-            
-            {/* Gradient accent card */}
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--accent-red)]/10 blur-3xl rounded-full" />
-
-            <div className="flex items-center justify-between border-b border-[var(--border)] pb-6">
-              <div className="flex items-center gap-2.5">
-                <div className="w-3.5 h-3.5 rounded-full bg-[var(--accent-red)] animate-pulse" />
-                <span className="font-mono text-xs uppercase tracking-wider text-[var(--text-secondary)]">US POLICY BRIEF CORE</span>
-              </div>
-              <span className="font-mono text-xs text-[var(--text-muted)]">v1.2</span>
-            </div>
-
-            <div className="my-auto py-6">
-              <span className="font-display font-bold text-5xl text-[var(--text-primary)] leading-tight mb-4 block">
-                US POLICY <span className="text-[var(--accent-red)]">BRIEF</span>
-              </span>
-              <p className="text-sm text-[var(--text-muted)] leading-relaxed max-w-sm">
-                Independent reporting delivered with integrity and energy. Refusing to optimize for outrage, we optimize for truth.
-              </p>
-            </div>
-
-            <div className="border-t border-[var(--border)] pt-6 flex items-center justify-between text-[11px] font-mono tracking-widest text-[var(--text-muted)] uppercase">
-              <span>Truth · Transparency</span>
-              <span>© {new Date().getFullYear()}</span>
+            <div className="text-xs font-bold uppercase tracking-wider text-[var(--muted)]">
+              {stat.label}
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* ── STATS SECTION ────────────────────────────── */}
-      <section className="border-y border-[var(--border)] bg-[var(--bg-surface)]/20 backdrop-blur-sm relative z-10">
-        <div className="max-w-[1280px] mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-[var(--border)]">
-            {stats.map((stat, i) => (
-              <div key={i} className="py-10 px-6 text-center group hover:bg-[var(--bg-hover)]/30 transition-all duration-300">
-                <p className="font-display font-extrabold text-5xl md:text-6xl text-[var(--accent-red)] mb-2 group-hover:scale-110 transition-transform duration-300 leading-none">
-                  {stat.number}
-                </p>
-                <p className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] max-w-[180px] mx-auto">
-                  {stat.label}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
+        ))}
       </section>
 
       {/* ── MISSION SECTION ──────────────────────────── */}
-      <section className="py-24 max-w-[1280px] mx-auto px-4 sm:px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-start">
+      <section className="editorial-section mt-0 mb-12">
+        <div className="section-heading-row">
+          <h2 className="section-heading">Our Mission</h2>
+          <Link href="/policy" className="section-more">Read standards →</Link>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           <div className="lg:col-span-5">
-            <div className="flex items-center gap-3 mb-6">
-              <span className="w-1.5 h-6 rounded-full bg-[var(--accent-red)]" />
-              <h2 className="font-mono text-xs font-bold uppercase tracking-[0.25em] text-[var(--accent-red)]">
-                {dict.ourMission}
-              </h2>
-            </div>
-            <h3 className="font-display font-extrabold text-4xl md:text-5xl leading-tight text-[var(--text-primary)]">
-              Strengthening Democracy Through Truth.
-            </h3>
-          </div>
-          <div className="lg:col-span-7">
-            <blockquote className="font-serif italic text-2xl md:text-3xl leading-snug text-[var(--text-primary)] mb-8 pl-6 border-l-2 border-[var(--accent-red)]">
+            <blockquote className="font-serif italic text-2xl md:text-3xl text-[var(--ink)] leading-snug pl-4 border-l-4 border-[var(--bbc-red)]">
               "We believe that accurate, data-driven, and unspun information is a fundamental right of every citizen in a free society."
             </blockquote>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 text-base text-[var(--text-secondary)] leading-relaxed">
-              <p>
-                US Policy Brief was founded on a simple conviction: that in a healthy society, citizens need access to accurate, unspun information.
-              </p>
-              <p>
-                In an era of algorithm-driven feeds and partisan amplification, we stand apart by refusing to optimize for outrage. We optimize for truth.
-              </p>
-            </div>
           </div>
-        </div>
-      </section>
-
-      {/* ── VALUES / STANDARDS SECTION ───────────────── */}
-      <section id="standards" className="py-24 border-t border-[var(--border)] bg-[var(--bg-surface)]/40 relative z-10">
-        <div className="max-w-[1280px] mx-auto px-4 sm:px-6">
-          
-          <div className="text-center max-w-2xl mx-auto mb-20">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[var(--accent-red)]/20 bg-[var(--accent-red)]/5 mb-4">
-              <span className="font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--accent-red)]">
-                OUR COMMITMENT
-              </span>
-            </div>
-            <h2 className="font-display font-extrabold text-4xl md:text-5xl text-[var(--text-primary)]">
-              {dict.editorialStandards}
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {values.map((v, i) => (
-              <div 
-                key={i} 
-                className="p-8 rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--accent-red)]/50 transition-all duration-300 group flex flex-col justify-between"
+          <div className="lg:col-span-7 space-y-4 text-base text-[#1f1f1f] leading-relaxed">
+            <p>
+              US Policy Brief was founded on a simple conviction: in a healthy society, citizens need access to verifiable, unbiased facts to evaluate legislation and hold power accountable.
+            </p>
+            <p>
+              In an era of algorithm-driven feeds and partisan amplification, we refuse to optimize for outrage. Every article, briefing, and analysis piece is authored and verified by journalists committed to truth, depth, and public interest.
+            </p>
+            <div className="pt-2 flex flex-wrap gap-3">
+              <Link
+                href="/policy"
+                className="inline-flex items-center px-4 py-2 bg-[var(--ink)] text-white text-xs font-bold uppercase tracking-wider hover:bg-[#333] transition-colors"
               >
-                <div>
-                  <span className="text-4xl mb-6 block group-hover:scale-110 transition-transform duration-300 origin-left">
-                    {v.icon}
-                  </span>
-                  <h3 className="font-display font-bold text-xl text-[var(--text-primary)] mb-3 group-hover:text-[var(--accent-red)] transition-colors">
-                    {v.title}
-                  </h3>
-                  <p className="text-sm text-[var(--text-muted)] leading-relaxed">
-                    {v.body}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-        </div>
-      </section>
-
-      {/* ── TIMELINE SECTION ─────────────────────────── */}
-      <section className="py-24 border-t border-[var(--border)] relative z-10">
-        <div className="max-w-[1280px] mx-auto px-4 sm:px-6">
-          
-          <div className="text-center max-w-2xl mx-auto mb-20">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[var(--accent-red)]/20 bg-[var(--accent-red)]/5 mb-4">
-              <span className="font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--accent-red)]">
-                OUR JOURNEY
-              </span>
+                Editorial Policy & Standards →
+              </Link>
+              <Link
+                href="/contact"
+                className="inline-flex items-center px-4 py-2 bg-[var(--surface)] text-[var(--ink)] border border-[var(--line)] text-xs font-bold uppercase tracking-wider hover:border-[var(--ink)] transition-colors"
+              >
+                Contact Newsroom
+              </Link>
             </div>
-            <h2 className="font-display font-extrabold text-4xl md:text-5xl text-[var(--text-primary)]">
-              A Decade of Impact.
-            </h2>
           </div>
-
-          <div className="relative">
-            {/* Vertical Center Line */}
-            <div className="absolute left-4 sm:left-1/2 top-0 bottom-0 w-[1px] bg-gradient-to-b from-[var(--accent-red)] via-[var(--border)] to-[var(--accent-red)] translate-x-[-50%]" />
-
-          <div className="space-y-16">
-            {timeline.map((item, i) => {
-              const isEven = i % 2 === 0
-              return (
-                <div key={i} className="relative flex flex-col sm:flex-row items-start sm:items-center">
-                  
-                  {/* Left block (Desktop) */}
-                  <div className={`w-full sm:w-1/2 pr-0 sm:pr-12 text-left sm:text-right hidden sm:block ${isEven ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-                    <span className="font-display font-extrabold text-3xl text-[var(--accent-red)] mb-2 block">
-                      {item.year}
-                    </span>
-                    <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
-                      {item.event}
-                    </p>
-                  </div>
-
-                  {/* Dot (Center) */}
-                  <div className="absolute left-4 sm:left-1/2 w-4 h-4 rounded-full border-2 border-[var(--accent-red)] bg-[var(--bg-primary)] translate-x-[-50%] z-10 flex items-center justify-center">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[var(--accent-red)] animate-ping" />
-                  </div>
-
-                  {/* Right block (Desktop) / Main block (Mobile) */}
-                  <div className={`w-full sm:w-1/2 pl-12 sm:pl-12 text-left ${!isEven ? 'sm:opacity-100' : 'sm:opacity-0 sm:pointer-events-none'}`}>
-                    <span className="font-display font-extrabold text-3xl text-[var(--accent-red)] mb-2 block sm:hidden">
-                      {item.year}
-                    </span>
-                    <span className="font-display font-extrabold text-3xl text-[var(--accent-red)] mb-2 hidden sm:block">
-                      {item.year}
-                    </span>
-                    <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
-                      {item.event}
-                    </p>
-                  </div>
-
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      </div>
-    </section>
-
-      {/* ── CLOSING BANNER ───────────────────────────── */}
-      <section className="py-28 px-4 sm:px-6 text-center border-t border-[var(--border)] relative overflow-hidden bg-[var(--bg-surface)]/20">
-        
-        {/* Glow */}
-        <div className="absolute top-1/2 left-1/2 w-80 h-80 bg-[var(--accent-red)]/10 blur-[100px] rounded-full translate-x-[-50%] translate-y-[-50%]" />
-        
-        <div className="relative z-10 max-w-3xl mx-auto">
-          <span className="text-6xl text-[var(--accent-red)] opacity-50 font-display block mb-6 select-none">"</span>
-          
-          <blockquote className="font-serif italic text-3xl md:text-4xl text-[var(--text-primary)] leading-tight mb-8">
-            Democracy dies in darkness. We carry the light.
-          </blockquote>
-          
-          <div className="w-12 h-[2px] mx-auto bg-[var(--accent-red)] mb-6" />
-          
-          <p className="font-mono text-xs font-bold uppercase tracking-[0.3em] text-[var(--accent-red)]">
-            The Editorial Board, US Policy Brief
-          </p>
         </div>
       </section>
 
+      {/* ── CORE STANDARDS ───────────────────────────── */}
+      <section className="editorial-section mb-12" id="standards">
+        <div className="section-heading-row">
+          <h2 className="section-heading">Editorial Standards & Principles</h2>
+          <Link href="/policy" className="section-more">Full policy →</Link>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {standards.map((val, idx) => (
+            <div
+              key={idx}
+              className="p-5 bg-white border border-[var(--line)] hover:border-[var(--bbc-red)] transition-colors"
+            >
+              <span className="story-kicker block mb-1 font-mono font-bold text-[var(--bbc-red)]">
+                {val.num}
+              </span>
+              <h3 className="story-title text-xl font-bold text-[var(--ink)] mb-2">
+                {val.title}
+              </h3>
+              <p className="text-sm text-[var(--muted)] leading-relaxed">
+                {val.body}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── EDITORIAL LEADERSHIP ─────────────────────── */}
+      <section className="editorial-section mb-12">
+        <div className="section-heading-row">
+          <h2 className="section-heading">Editorial Leadership</h2>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {leadership.map((person, idx) => (
+            <div key={idx} className="p-5 bg-[var(--surface)] border border-[var(--soft-line)]">
+              <span className="story-kicker block text-[var(--bbc-red)] mb-1">
+                {person.role}
+              </span>
+              <h3 className="story-title text-lg font-bold text-[var(--ink)] mb-2">
+                {person.name}
+              </h3>
+              <p className="text-xs text-[var(--muted)] leading-relaxed">
+                {person.bio}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── TIMELINE ─────────────────────────────────── */}
+      <section className="editorial-section mb-12">
+        <div className="section-heading-row">
+          <h2 className="section-heading">Newsroom Milestones</h2>
+        </div>
+
+        <div className="divide-y divide-[var(--line)] border-y border-[var(--line)]">
+          {timeline.map((item, idx) => (
+            <div
+              key={idx}
+              className="py-4 grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-6 items-baseline"
+            >
+              <div className="md:col-span-2 font-serif text-2xl font-bold text-[var(--bbc-red)]">
+                {item.year}
+              </div>
+              <div className="md:col-span-4 font-serif text-base font-bold text-[var(--ink)]">
+                {item.title}
+              </div>
+              <div className="md:col-span-6 text-sm text-[var(--muted)] leading-relaxed">
+                {item.event}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── BOTTOM CTA ───────────────────────────────── */}
+      <div className="mt-8 p-8 bg-[var(--surface)] border-t-2 border-[var(--ink)] text-center">
+        <h3 className="story-title text-2xl font-bold mb-2">
+          Have a tip or inquiry for our reporters?
+        </h3>
+        <p className="text-sm text-[var(--muted)] max-w-xl mx-auto mb-6">
+          We welcome confidential whistleblower tips, press inquiries, corrections, and reader feedback.
+        </p>
+        <Link
+          href="/contact"
+          className="inline-block px-6 py-3 bg-[var(--bbc-red)] text-white text-xs font-bold uppercase tracking-widest hover:bg-[#900] transition-colors"
+        >
+          Contact US Policy Brief
+        </Link>
+      </div>
     </div>
   )
 }

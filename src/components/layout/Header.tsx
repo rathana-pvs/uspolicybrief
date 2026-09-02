@@ -36,6 +36,7 @@ const menuGroups = [
     links: [
       ['About Us', '/about'],
       ['Contact', '/contact'],
+      ['Editorial Policy', '/policy'],
       ['Privacy Policy', '/privacy'],
     ],
   },

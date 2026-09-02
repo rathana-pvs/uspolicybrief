@@ -14,17 +14,8 @@ interface PageProps {
   params: Promise<{ slug: string | string[] }>
 }
 
-export const dynamicParams = true
+export const dynamic = 'force-dynamic'
 export const revalidate = 60
-
-export async function generateStaticParams() {
-  try {
-    const articles = await getArticles({ limit: 30 })
-    return articles.docs.map((a) => ({ slug: [a.slug] }))
-  } catch (error) {
-    return []
-  }
-}
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const resolvedParams = await params
@@ -110,11 +101,11 @@ export default async function ArticlePage({ params }: PageProps) {
   const authorInitial = (article.author?.name || 'B').charAt(0).toUpperCase()
   const formattedDate = article.publishedAt ? formatDate(article.publishedAt, 'd MMMM yyyy') : 'Recent'
 
-  const widgetSidebar = process.env.NEXT_PUBLIC_ADS_KEEPER_WIDGET_SIDEBAR || '2043076'
-  const widgetInArticle1 = process.env.NEXT_PUBLIC_ADS_KEEPER_WIDGET_IN_ARTICLE_1 || '2043077'
-  const widgetInArticle2 = process.env.NEXT_PUBLIC_ADS_KEEPER_WIDGET_IN_ARTICLE_2 || '2044156'
-  const widgetUnderArticle = process.env.NEXT_PUBLIC_ADS_KEEPER_WIDGET_UNDER_ARTICLE || '2043079'
-  const widgetFeed = process.env.NEXT_PUBLIC_ADS_KEEPER_WIDGET_FEED || '2043075'
+  const widgetSidebar = process.env.NEXT_PUBLIC_ADS_KEEPER_WIDGET_SIDEBAR || '2076627'
+  const widgetInArticle1 = process.env.NEXT_PUBLIC_ADS_KEEPER_WIDGET_IN_ARTICLE_1 || '2076626'
+  const widgetInArticle2 = process.env.NEXT_PUBLIC_ADS_KEEPER_WIDGET_IN_ARTICLE_2 || ''
+  const widgetUnderArticle = process.env.NEXT_PUBLIC_ADS_KEEPER_WIDGET_UNDER_ARTICLE || ''
+  const widgetFeed = process.env.NEXT_PUBLIC_ADS_KEEPER_WIDGET_FEED || '2076625'
 
   const jsonLd = {
     '@context': 'https://schema.org',

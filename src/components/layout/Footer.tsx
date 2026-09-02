@@ -19,7 +19,12 @@ export default function Footer({ settings }: FooterProps) {
         </Link>
         <nav className="footer-channel-list" aria-label="Footer channels">{channels.map(([label, href]) => <Link href={href} key={label}>{label}</Link>)}</nav>
         <div className="footer-follow"><span>Follow US Policy Brief on:</span><div className="social-links" aria-label="Social media"><Link href="#" aria-label="X">X</Link><Link href="#" aria-label="Facebook">f</Link><Link href="#" aria-label="Instagram">◎</Link><Link href="#" aria-label="YouTube">▶</Link></div></div>
-        <nav className="footer-legal-list" aria-label="Legal links"><Link href="/privacy">Privacy Policy</Link><Link href="/about">About Us</Link><Link href="/contact">Contact</Link></nav>
+        <nav className="footer-legal-list" aria-label="Legal links">
+          <Link href="/privacy">Privacy Policy</Link>
+          <Link href="/policy">Editorial Policy</Link>
+          <Link href="/about">About Us</Link>
+          <Link href="/contact">Contact</Link>
+        </nav>
         <div className="footer-copy"><p>{footerText}</p><p>US Policy Brief provides independent journalism across digital and mobile platforms.</p></div>
       </div>
     </footer>

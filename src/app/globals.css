@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   --bbc-red: #b80000;
   --ink: #141414;
@@ -11,6 +15,21 @@
   --reading-width: 720px;
   --font-sans: Arial, Helvetica, sans-serif;
   --font-serif: Georgia, "Times New Roman", serif;
+
+  /* Semantic theme variables */
+  --bg-primary: #ffffff;
+  --bg-surface: #f6f6f6;
+  --bg-card: #ffffff;
+  --bg-hover: #f0f0f0;
+  --text-primary: #141414;
+  --text-secondary: #545454;
+  --text-muted: #707070;
+  --accent-red: #b80000;
+  --accent-red-bright: #d10000;
+  --accent-gold: #b80000;
+  --accent-blue: #0f58d6;
+  --border: #d2d2d2;
+  --border-subtle: #e6e6e6;
 }
 
 *, *::before, *::after { box-sizing: border-box; }

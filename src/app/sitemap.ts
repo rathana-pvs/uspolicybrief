@@ -9,7 +9,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const siteUrl = envUrl && !envUrl.includes('placeholder.com') ? envUrl : 'https://uspolicybrief.com'
 
   // Static pages
-  const staticPages = ['', '/about', '/contact', '/privacy', '/live', '/search']
+  const staticPages = ['', '/about', '/contact', '/policy', '/privacy', '/live', '/search']
 
   // Fetch all articles
   const { docs: articles } = await payload.find({
