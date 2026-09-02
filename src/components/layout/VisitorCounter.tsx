@@ -21,28 +21,30 @@ export function VisitorCounter() {
       document.body.appendChild(configScript)
     }
 
-    // 3. Load dynamic.js from secure widgets.amung.us HTTPS CDN
-    if (!document.getElementById('_wau_loader')) {
-      const loaderScript = document.createElement('script')
-      loaderScript.id = '_wau_loader'
-      loaderScript.async = true
-      loaderScript.src = 'https://widgets.amung.us/dynamic.js'
-      document.body.appendChild(loaderScript)
-    }
+    // 3. Clear localStorage cache so whos.amung.us doesn't stick to the homepage title
+    try {
+      localStorage.removeItem('_wautime')
+      localStorage.removeItem('_waucount')
+    } catch (e) {}
 
-    // 4. Send ping to whos.amung.us with accurate title and URL after title settles
+    // 4. Send ping to whos.amung.us with accurate article headline and URL after render
     const timeoutId = setTimeout(() => {
-      const pageTitle = document.title || 'US Policy Brief'
-      const pageUrl = window.location.href
-      const referrer = document.referrer || ''
+      // Prioritize the actual article <h1> headline, then document.title
+      const h1Text = document.querySelector('h1')?.textContent?.trim()
+      const rawTitle = h1Text || document.title || 'US Policy Brief'
+      const cleanTitle = rawTitle.replace(/\s*—\s*US Policy Brief.*$/i, '').trim()
+      
+      const pageTitle = encodeURIComponent(cleanTitle.substr(0, 80).replace(/(\?=)|(\/)/g, ''))
+      const pageUrl = encodeURIComponent(window.location.href)
+      const referrer = encodeURIComponent(document.referrer || '')
       const randomId = Math.ceil(99999 * Math.random())
 
       const pingScript = document.createElement('script')
       pingScript.id = `_wau_ping_${Date.now()}`
       pingScript.async = true
-      pingScript.src = `https://whos.amung.us/pingjs/?k=4e9mbhwyhk&t=${encodeURIComponent(pageTitle)}&c=d&x=${encodeURIComponent(pageUrl)}&y=${encodeURIComponent(referrer)}&v=27&r=${randomId}`
+      pingScript.src = `https://whos.amung.us/pingjs/?k=4e9mbhwyhk&t=${pageTitle}&c=d&x=${pageUrl}&y=${referrer}&a=-1&v=27&r=${randomId}`
       document.head.appendChild(pingScript)
-    }, 150)
+    }, 250)
 
     return () => {
       clearTimeout(timeoutId)
