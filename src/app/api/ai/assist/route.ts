@@ -1,6 +1,7 @@
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { generateText } from 'ai'
 import { NextRequest, NextResponse } from 'next/server'
+import { headers as getNextHeaders } from 'next/headers'
 import { getPayloadClient } from '@/lib/payload'
 import * as cheerio from 'cheerio'
 
@@ -13,7 +14,12 @@ function resolveUrl(baseUrl: string, relativeUrl: string): string {
 }
 
 async function scrapeUrlDirectly(url: string) {
-  const res = await fetch(url, {
+  let targetUrl = url.trim()
+  if (!/^https?:\/\//i.test(targetUrl)) {
+    targetUrl = `https://${targetUrl}`
+  }
+
+  const res = await fetch(targetUrl, {
     headers: {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
@@ -708,38 +714,98 @@ function buildLexicalJson(blocks: any[]): any {
   }
 }
 
-const googleAI = createGoogleGenerativeAI({
-  apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
-})
+function getGoogleAI() {
+  const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY
+  if (!apiKey) {
+    throw new Error('GOOGLE_GENERATIVE_AI_API_KEY is not configured in environment variables')
+  }
+  return createGoogleGenerativeAI({ apiKey })
+}
 
 const PRIMARY_MODEL_ID = 'gemini-3.5-flash-lite'
 const FALLBACK_MODEL_ID = 'gemini-3.6-flash'
+const TERTIARY_MODEL_ID = 'gemini-2.5-flash'
 
-const primaryModel = googleAI(PRIMARY_MODEL_ID)
-const fallbackModel = googleAI(FALLBACK_MODEL_ID)
+async function generateAiText(systemPrompt: string, userPrompt: string): Promise<string> {
+  const googleAI = getGoogleAI()
+  const candidateModels = [PRIMARY_MODEL_ID, FALLBACK_MODEL_ID, TERTIARY_MODEL_ID]
+  let lastErr: any = null
 
-// GET /api/ai/assist — health check both models
-export async function GET(req: NextRequest) {
-  const results: Record<string, { ok: boolean; response?: string; error?: string }> = {}
-
-  for (const [name, model] of [
-    [PRIMARY_MODEL_ID, primaryModel],
-    [FALLBACK_MODEL_ID, fallbackModel],
-  ] as [string, any][]) {
+  for (const modelId of candidateModels) {
     try {
+      const model = googleAI(modelId)
       const res = await generateText({
         model,
-        prompt: 'Reply with exactly: OK',
-        maxOutputTokens: 5,
+        system: systemPrompt,
+        prompt: userPrompt,
       })
-      results[name] = { ok: true, response: res.text.trim() }
-    } catch (e: any) {
-      results[name] = { ok: false, error: e?.message || 'Unknown error' }
+      if (res.text && res.text.trim()) {
+        return res.text
+      }
+    } catch (err: any) {
+      console.warn(`[AI Assist] Model ${modelId} failed:`, err?.message)
+      lastErr = err
     }
   }
 
-  const allOk = Object.values(results).every(r => r.ok)
-  return NextResponse.json({ allOk, models: results }, { status: allOk ? 200 : 500 })
+  throw lastErr || new Error('All AI models failed to generate content')
+}
+
+function extractJsonFromText(rawText: string): any {
+  if (!rawText) throw new Error('Empty response from AI model')
+
+  let text = rawText
+    .replace(/<thought>[\s\S]*?<\/thought>/gi, '')
+    .replace(/<thinking>[\s\S]*?<\/thinking>/gi, '')
+    .trim()
+
+  try {
+    return JSON.parse(text)
+  } catch {}
+
+  const markdownJsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i)
+  if (markdownJsonMatch && markdownJsonMatch[1]) {
+    try {
+      return JSON.parse(markdownJsonMatch[1].trim())
+    } catch {}
+  }
+
+  const firstBrace = text.indexOf('{')
+  const lastBrace = text.lastIndexOf('}')
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    const candidate = text.substring(firstBrace, lastBrace + 1)
+    try {
+      return JSON.parse(candidate)
+    } catch {}
+  }
+
+  throw new Error(`Failed to parse valid JSON from AI response: ${text.substring(0, 120)}...`)
+}
+
+// GET /api/ai/assist — health check all models
+export async function GET() {
+  const results: Record<string, { ok: boolean; response?: string; error?: string }> = {}
+
+  try {
+    const googleAI = getGoogleAI()
+    for (const modelId of [PRIMARY_MODEL_ID, FALLBACK_MODEL_ID, TERTIARY_MODEL_ID]) {
+      try {
+        const model = googleAI(modelId)
+        const res = await generateText({
+          model,
+          prompt: 'Reply with exactly: OK',
+        })
+        results[modelId] = { ok: true, response: res.text.trim() }
+      } catch (e: any) {
+        results[modelId] = { ok: false, error: e?.message || 'Unknown error' }
+      }
+    }
+  } catch (initErr: any) {
+    return NextResponse.json({ allOk: false, error: initErr?.message }, { status: 500 })
+  }
+
+  const anyOk = Object.values(results).some(r => r.ok)
+  return NextResponse.json({ allOk: anyOk, models: results }, { status: anyOk ? 200 : 500 })
 }
 
 const SYSTEM_PROMPT = `You are an expert news editor and content writer for a world-class news publication covering global news, politics, technology, business, and culture in BBC News style.
@@ -763,9 +829,21 @@ Always respond with valid JSON only. No markdown, no explanations outside the JS
 export async function POST(req: NextRequest) {
   try {
     const payload = await getPayloadClient()
-    const { user } = await payload.auth({ headers: req.headers })
+    let user = null
+
+    try {
+      const nextHeaders = await getNextHeaders()
+      const authRes = await payload.auth({ headers: nextHeaders })
+      user = authRes.user
+    } catch {
+      try {
+        const authRes = await payload.auth({ headers: req.headers })
+        user = authRes.user
+      } catch {}
+    }
+
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized. Please log in to CMS admin.' }, { status: 401 })
     }
 
     const { action, title, content, url } = await req.json()
@@ -962,32 +1040,9 @@ export async function POST(req: NextRequest) {
 
 Return valid JSON with exact keys: { "excerpt", "content", "region", "dateline", "tags", "metaTitle", "metaDescription" }`
 
-            let rawText = ''
-            try {
-              const res = await generateText({
-                model: primaryModel,
-                system: SYSTEM_PROMPT,
-                prompt: aiPrompt,
-              })
-              rawText = res.text
-            } catch (primaryErr: any) {
-              console.warn(`Primary AI model (${PRIMARY_MODEL_ID}) failed in scrape_direct, trying fallback (${FALLBACK_MODEL_ID}):`, primaryErr?.message)
-              const res = await generateText({
-                model: fallbackModel,
-                system: SYSTEM_PROMPT,
-                prompt: aiPrompt,
-              })
-              rawText = res.text
-            }
+            const rawText = await generateAiText(SYSTEM_PROMPT, aiPrompt)
+            const aiData = extractJsonFromText(rawText)
 
-            let cleanJson = rawText.trim()
-            if (cleanJson.startsWith('```json')) {
-              cleanJson = cleanJson.replace(/^```json\s*/, '').replace(/\s*```$/, '')
-            } else if (cleanJson.startsWith('```')) {
-              cleanJson = cleanJson.replace(/^```\s*/, '').replace(/\s*```$/, '')
-            }
-
-            const aiData = JSON.parse(cleanJson)
             if (aiData.excerpt) result.excerpt = aiData.excerpt
             if (aiData.tags) result.tags = aiData.tags
             if (aiData.metaTitle) result.metaTitle = aiData.metaTitle
@@ -1030,13 +1085,15 @@ Return valid JSON with exact keys: { "excerpt", "content", "region", "dateline",
       return NextResponse.json({ error: 'Title or content is required for AI generation' }, { status: 400 })
     }
 
+    const siteName = process.env.NEXT_PUBLIC_SITE_NAME || 'US Policy Brief'
+
     let prompt = ''
     if (action === 'full') {
       prompt = `Given the article title "${title}"${content ? ` and notes: "${content}"` : ''}, generate a complete summary news article adhering to these rules:
 - "excerpt": A punchy, high-engagement lead summary strictly under 160 characters.
 - "content": Summary body of EXACTLY 4 short paragraphs (no H2/H3 subheadings). Total word count MUST be between 120 and 140 words. Each paragraph MUST be at most 35 words long.
 - "tags": ["3-5 relevant lowercase tags"]
-- "metaTitle": SEO title strictly 50-60 characters ending with - InstantlyFeed.
+- "metaTitle": SEO title strictly 50-60 characters ending with - ${siteName}.
 - "metaDescription": SEO meta description strictly 100-150 characters.
 
 Return JSON with exact keys: { "excerpt", "content", "tags", "metaTitle", "metaDescription" }`
@@ -1050,39 +1107,14 @@ Return JSON with exact keys: { "excerpt", "content" }`
       prompt = `Given the article title "${title}"${content ? ` and excerpt/content: "${content}"` : ''}, generate SEO metadata adhering to these rules:
 - "excerpt": A punchy, high-engagement lead summary strictly under 160 characters.
 - "tags": ["3-5 relevant lowercase tags"]
-- "metaTitle": SEO title strictly 50-60 characters ending with - InstantlyFeed.
+- "metaTitle": SEO title strictly 50-60 characters ending with - ${siteName}.
 - "metaDescription": SEO meta description strictly 100-150 characters.
 
 Return JSON with exact keys: { "excerpt", "tags", "metaTitle", "metaDescription" }`
     }
 
-    let rawText = ''
-    try {
-      const res = await generateText({
-        model: primaryModel,
-        system: SYSTEM_PROMPT,
-        prompt,
-      })
-      rawText = res.text
-    } catch (primaryErr: any) {
-      console.warn(`Primary AI model (${PRIMARY_MODEL_ID}) failed, trying fallback (${FALLBACK_MODEL_ID}):`, primaryErr?.message)
-      const res = await generateText({
-        model: fallbackModel,
-        system: SYSTEM_PROMPT,
-        prompt,
-      })
-      rawText = res.text
-    }
-
-    // Extract JSON from response
-    let cleanJson = rawText.trim()
-    if (cleanJson.startsWith('```json')) {
-      cleanJson = cleanJson.replace(/^```json\s*/, '').replace(/\s*```$/, '')
-    } else if (cleanJson.startsWith('```')) {
-      cleanJson = cleanJson.replace(/^```\s*/, '').replace(/\s*```$/, '')
-    }
-
-    const aiData = JSON.parse(cleanJson)
+    const rawText = await generateAiText(SYSTEM_PROMPT, prompt)
+    const aiData = extractJsonFromText(rawText)
     const enforced = enforceSeoLimits(aiData)
 
     return NextResponse.json({ success: true, data: enforced })
@@ -1098,11 +1130,13 @@ Return JSON with exact keys: { "excerpt", "tags", "metaTitle", "metaDescription"
 function enforceSeoLimits(seoData: any) {
   if (!seoData) return seoData
 
-  // 1. Meta Title: 50–60 characters (including - InstantlyFeed suffix)
+  const siteName = process.env.NEXT_PUBLIC_SITE_NAME || 'US Policy Brief'
+
+  // 1. Meta Title: 50–60 characters
   if (seoData.metaTitle && typeof seoData.metaTitle === 'string') {
     let title = seoData.metaTitle.trim()
     if (title.length > 60) {
-      const suffix = title.endsWith(' - InstantlyFeed') ? ' - InstantlyFeed' : (title.endsWith(' | InstantlyFeed') ? ' | InstantlyFeed' : '')
+      const suffix = title.endsWith(` - ${siteName}`) ? ` - ${siteName}` : (title.endsWith(` | ${siteName}`) ? ` | ${siteName}` : '')
       const maxPrefixLength = 60 - suffix.length
       if (suffix) {
         let prefix = title.substring(0, title.length - suffix.length).trim()
