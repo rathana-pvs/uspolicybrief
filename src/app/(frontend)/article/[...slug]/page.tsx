@@ -201,10 +201,10 @@ export default async function ArticlePage({ params }: PageProps) {
               )}
             </div>
 
-            {/* Under-Article Native Ad Grid */}
-            {widgetUnderArticle && (
-              <div className="article-under-ad my-8">
-                <AdskeeperWidget widgetId={widgetUnderArticle} />
+            {/* Bottom Feed Native Ad Widget — inside article content column, no border */}
+            {widgetFeed && (
+              <div className="article-bottom-feed-wrapper mt-6 mb-8">
+                <AdskeeperWidget widgetId={widgetFeed} />
               </div>
             )}
           </div>
@@ -229,13 +229,6 @@ export default async function ArticlePage({ params }: PageProps) {
             )}
           </aside>
         </div>
-
-        {/* Bottom Feed Native Ad Widget */}
-        {widgetFeed && (
-          <div className="article-bottom-feed-wrapper mt-10 mb-8 border-t border-[var(--line)] pt-8">
-            <AdskeeperWidget widgetId={widgetFeed} />
-          </div>
-        )}
       </article>
     </>
   )

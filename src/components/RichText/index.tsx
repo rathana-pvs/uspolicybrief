@@ -76,15 +76,15 @@ export const RichText = ({
   for (let i = 0; i < nodes.length; i++) {
     if (nodes[i].type === 'paragraph') {
       paragraphCount++
-      // Allow reading first 2 substantial paragraphs before continue reading prompt
-      if (paragraphCount === 2) {
+      // Split immediately after Paragraph 1
+      if (paragraphCount === 1) {
         splitIndex = i + 1
       }
     }
   }
 
-  // If article has 3 or fewer paragraphs, show full article directly
-  if (paragraphCount <= 3 || nodes.length <= 3) {
+  // If article has only 1 paragraph or 1 block, show full article directly
+  if (paragraphCount <= 1 || nodes.length <= 1) {
     return (
       <div className={`rich-text ${className || ''}`}>
         {serializeLexical(nodes, 'full')}
@@ -97,13 +97,15 @@ export const RichText = ({
     )
   }
 
-  const topNodes = nodes.slice(0, splitIndex)
-  const remainingNodes = nodes.slice(splitIndex)
+  const topNodes = nodes.slice(0, splitIndex) // Paragraph 1
+  const remainingNodes = nodes.slice(splitIndex) // Paragraph 2, 3, 4...
 
   return (
     <div className={`rich-text ${className || ''}`}>
+      {/* Paragraph 1 */}
       {serializeLexical(topNodes, 'top')}
 
+      {/* Ad after Paragraph 1 */}
       {primaryWidgetId && (
         <div className="my-6 w-full flex justify-center items-center">
           <AdskeeperWidget widgetId={primaryWidgetId} className="!my-0" />
@@ -112,7 +114,7 @@ export const RichText = ({
 
       {!isExpanded ? (
         <div className="continue-reading-gate">
-          {/* Subtle fade-out over next paragraph */}
+          {/* Paragraph 2 with bottom half blurred */}
           <div className="continue-reading-fade">
             {serializeLexical(remainingNodes.slice(0, 1), 'teaser')}
             <div className="continue-reading-fade-overlay" />
