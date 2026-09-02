@@ -26,6 +26,30 @@ async function verify() {
     })
   }
 
+  // 🧪 Test Media Upload Verification
+  console.log(`\n🧪 Testing Media Upload Creation...`)
+  const testPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFElEQVR42mNk+M9QzwAEjDAGBiYACQcCARfUaVAAAAAASUVORK5CYII=', 'base64')
+  const testMedia = await payload.create({
+    collection: 'media',
+    data: {
+      alt: 'Upload Verification Test',
+      source: 'local',
+    },
+    file: {
+      data: testPng,
+      name: `verify-test-${Date.now()}.png`,
+      mimetype: 'image/png',
+      size: testPng.length,
+    },
+  })
+  console.log(`  ✓ Created test media ID: ${testMedia.id}, URL: ${testMedia.url}`)
+  
+  await payload.delete({
+    collection: 'media',
+    id: testMedia.id,
+  })
+  console.log(`  ✓ Successfully cleaned up test media`)
+
   process.exit(0)
 }
 

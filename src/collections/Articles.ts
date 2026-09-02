@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { lexicalEditor, BlocksFeature } from '@payloadcms/richtext-lexical'
+import { lexicalEditor, BlocksFeature, UploadFeature } from '@payloadcms/richtext-lexical'
 import { VideoEmbed } from '../blocks/VideoEmbed'
 import { slugify } from '../lib/utils'
 import { revalidateTag } from 'next/cache'
@@ -40,13 +40,15 @@ export const Articles: CollectionConfig = {
           data.readTime = Math.max(1, Math.ceil(wordCount / 200))
         }
 
+        const coverImageId = typeof data.coverImage === 'object' && data.coverImage !== null ? (data.coverImage.id || data.coverImage) : data.coverImage
+
         // Ensure og group exists and sync fields
         if (!data.og) {
           data.og = {}
         }
         data.og.metaTitle = data.title
         data.og.metaDescription = data.excerpt
-        data.og.ogImage = data.coverImage
+        data.og.ogImage = coverImageId
 
         // Ensure meta (SEO plugin) group exists and sync fields
         if (!data.meta) {
@@ -54,7 +56,7 @@ export const Articles: CollectionConfig = {
         }
         data.meta.title = data.title
         data.meta.description = data.excerpt
-        data.meta.image = data.coverImage
+        data.meta.image = coverImageId
 
         return data
       },
@@ -116,19 +118,24 @@ export const Articles: CollectionConfig = {
       },
     },
     { name: 'excerpt', type: 'textarea', required: true, maxLength: 250 },
-    {
-      name: 'keyPoints',
-      label: 'Key Developments / At a Glance',
-      type: 'array',
-      admin: { description: 'Bullet points shown at the top of the story.' },
-      fields: [{ name: 'point', type: 'text' }],
-    },
     { 
       name: 'content', 
       type: 'richText', 
       editor: lexicalEditor({
         features: ({ defaultFeatures }) => [
           ...defaultFeatures,
+          UploadFeature({
+            collections: {
+              media: {
+                fields: [
+                  {
+                    name: 'caption',
+                    type: 'text',
+                  },
+                ],
+              },
+            },
+          }),
           BlocksFeature({
             blocks: [VideoEmbed],
           }),

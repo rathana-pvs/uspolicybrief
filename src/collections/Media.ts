@@ -1,20 +1,32 @@
 import type { CollectionConfig } from 'payload'
 import path from 'path'
+import fs from 'fs'
 
-const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL && !process.env.NEXT_PUBLIC_SITE_URL.includes('placeholder'))
-  ? process.env.NEXT_PUBLIC_SITE_URL
-  : 'https://instantlyfeed.com'
+const mediaDir = path.resolve(process.cwd(), 'public/media')
+try {
+  if (!fs.existsSync(mediaDir)) {
+    fs.mkdirSync(mediaDir, { recursive: true })
+  }
+} catch (e) {
+  // Ignore in read-only environments
+}
 
 export const Media: CollectionConfig = {
   slug: 'media',
   upload: {
-    staticDir: path.resolve(process.cwd(), 'public/media'),
+    staticDir: mediaDir,
     mimeTypes: ['image/*', 'video/*'],
     adminThumbnail: ({ doc }: any) => {
+      if (doc?.sizes?.thumbnail?.url && (doc.sizes.thumbnail.url.startsWith('http://') || doc.sizes.thumbnail.url.startsWith('https://'))) {
+        return doc.sizes.thumbnail.url
+      }
+      if (doc?.url && (doc.url.startsWith('http://') || doc.url.startsWith('https://'))) {
+        return doc.url
+      }
+      if (doc?.externalUrl) return doc.externalUrl
       if (doc?.sizes?.thumbnail?.filename) return `/media/${doc.sizes.thumbnail.filename}`
       if (doc?.sizes?.thumbnail?.url) return doc.sizes.thumbnail.url
       if (doc?.filename) return `/media/${doc.filename}`
-      if (doc?.externalUrl) return doc.externalUrl
       if (doc?.url) return doc.url
       return null
     },
@@ -56,6 +68,8 @@ export const Media: CollectionConfig = {
         // If it's an external source, use the externalUrl
         if (data.source === 'external' && data.externalUrl) {
           data.url = data.externalUrl
+        } else if (data.url && (data.url.startsWith('http://') || data.url.startsWith('https://'))) {
+          // Preserve external / Cloudinary URL
         } else if (data.filename) {
           // Store relative /media URL so it works seamlessly across localhost and production
           data.url = `/media/${data.filename}`
@@ -78,7 +92,9 @@ export const Media: CollectionConfig = {
         // Also ensure all image size URLs use the direct /media/ path
         if (doc.sizes && typeof doc.sizes === 'object') {
           for (const sizeKey of Object.keys(doc.sizes)) {
-            if (doc.sizes[sizeKey]?.filename) {
+            if (doc.sizes[sizeKey]?.url && (doc.sizes[sizeKey].url.startsWith('http://') || doc.sizes[sizeKey].url.startsWith('https://'))) {
+              // Keep external/Cloudinary size URL
+            } else if (doc.sizes[sizeKey]?.filename) {
               doc.sizes[sizeKey].url = `/media/${doc.sizes[sizeKey].filename}`
             }
           }

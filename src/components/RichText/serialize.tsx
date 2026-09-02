@@ -2,6 +2,7 @@ import { Fragment, JSX } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { TwitterEmbed } from '@/components/article/TwitterEmbed'
+import { getMediaUrl } from '@/lib/utils'
 
 type Node = {
   type: string
@@ -155,13 +156,16 @@ export function serializeLexical(nodes: Node[], keyPrefix: string = 'node'): JSX
         const media = node.value
         if (!media || node.relationTo !== 'media') return null
         
+        const mediaUrl = getMediaUrl(media, '')
+        if (!mediaUrl) return null
+
         const isVideo = media.mimeType?.startsWith('video/')
 
         if (isVideo) {
           return (
             <div key={nodeKey} className="my-10 rounded-xl overflow-hidden shadow-2xl border border-white/5 bg-black">
               <video
-                src={media.url || ''}
+                src={mediaUrl}
                 controls
                 className="w-full aspect-video"
                 playsInline
@@ -180,10 +184,11 @@ export function serializeLexical(nodes: Node[], keyPrefix: string = 'node'): JSX
         return (
           <div key={nodeKey} className="my-10 relative rounded-xl overflow-hidden shadow-2xl border border-white/5 group">
             <Image
-              src={media.url || ''}
+              src={mediaUrl}
               alt={media.alt || ''}
               width={media.width || 1200}
               height={media.height || 800}
+              unoptimized={mediaUrl.startsWith('/media/')}
               className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-[1.01]"
             />
             {media.caption && (

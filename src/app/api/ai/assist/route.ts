@@ -753,9 +753,8 @@ For content summarization and AI formatting, follow these strict editorial rules
 6. Core Takeaways First (Lead-In): Put the main conclusion, event, or answer in the very first sentence (the "5 Ws": Who, What, When, Where, Why).
 7. Eliminate Fluff & Redundancies: Strip away unnecessary background details, conversational filler, repetitive examples, and minor anecdotes.
 8. Maintain Factual Accuracy: Preserve the original meaning and context without altering facts or adding unverified information.
-9. At A Glance / Key Developments: Provide exactly 3 short bullet points summarizing key developments (max 15 words each).
-10. Region & Dateline: Categorize region (one of: world, europe, asia, us-canada, middle-east, latin-america, africa) and dateline (e.g. LONDON, GENEVA, WASHINGTON, TOKYO).
-11. SEO Metadata Limits:
+9. Region & Dateline: Categorize region (one of: world, europe, asia, us-canada, middle-east, latin-america, africa) and dateline (e.g. LONDON, GENEVA, WASHINGTON, TOKYO).
+10. SEO Metadata Limits:
    - Meta Title: 50–60 characters.
    - Meta Description: 100–150 characters.
 
@@ -826,7 +825,13 @@ export async function POST(req: NextRequest) {
                 alt: result.title || 'Scraped Image',
                 source: 'external',
                 externalUrl: result.scrapedImageUrl
-              }
+              },
+              file: {
+                data: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA6ie6hQAAAABJRU5ErkJggg==', 'base64'),
+                name: `external-cover-${Date.now()}.png`,
+                mimetype: 'image/png',
+                size: 70,
+              },
             })
             result.coverImage = mediaDoc.id
           } catch (extErr) {
@@ -879,7 +884,13 @@ export async function POST(req: NextRequest) {
                   alt: block.alt || result.title || 'Scraped Inline Image',
                   source: 'external',
                   externalUrl: block.src
-                }
+                },
+                file: {
+                  data: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA6ie6hQAAAABJRU5ErkJggg==', 'base64'),
+                  name: `external-inline-${Date.now()}.png`,
+                  mimetype: 'image/png',
+                  size: 70,
+                },
               })
               block.mediaId = mediaDoc.id
             } catch (extErr) {
@@ -943,14 +954,13 @@ export async function POST(req: NextRequest) {
             const aiPrompt = `Given the news article title "${result.title}" and text content:\n"${rawParagraphsText.substring(0, 2000)}"\n\nSummarize and reformat into a complete news summary adhering strictly to these rules:
 1. "excerpt": A punchy, high-engagement lead summary strictly under 160 characters.
 2. "content": Summary body of EXACTLY 4 short paragraphs (no H2/H3 subheadings). Total word count MUST be strictly between 120 and 140 words. Each paragraph MUST be at most 35 words long. Do NOT duplicate title.
-3. "keyPoints": Array of exactly 3 short bullet points (strings) for "At a glance" key developments (max 15 words each).
-4. "region": One of ["world", "europe", "asia", "us-canada", "middle-east", "latin-america", "africa"].
-5. "dateline": Uppercase city name of the news origin (e.g. "LONDON", "GENEVA", "WASHINGTON", "TOKYO").
-6. "tags": ["3-5 relevant lowercase tags"]
-7. "metaTitle": SEO title strictly 50-60 characters.
-8. "metaDescription": SEO meta description strictly 100-150 characters.
+3. "region": One of ["world", "europe", "asia", "us-canada", "middle-east", "latin-america", "africa"].
+4. "dateline": Uppercase city name of the news origin (e.g. "LONDON", "GENEVA", "WASHINGTON", "TOKYO").
+5. "tags": ["3-5 relevant lowercase tags"]
+6. "metaTitle": SEO title strictly 50-60 characters.
+7. "metaDescription": SEO meta description strictly 100-150 characters.
 
-Return valid JSON with exact keys: { "excerpt", "content", "keyPoints", "region", "dateline", "tags", "metaTitle", "metaDescription" }`
+Return valid JSON with exact keys: { "excerpt", "content", "region", "dateline", "tags", "metaTitle", "metaDescription" }`
 
             let rawText = ''
             try {
@@ -982,9 +992,6 @@ Return valid JSON with exact keys: { "excerpt", "content", "keyPoints", "region"
             if (aiData.tags) result.tags = aiData.tags
             if (aiData.metaTitle) result.metaTitle = aiData.metaTitle
             if (aiData.metaDescription) result.metaDescription = aiData.metaDescription
-            if (Array.isArray(aiData.keyPoints)) {
-              result.keyPoints = aiData.keyPoints.map((p: string) => ({ point: p }))
-            }
             if (aiData.region) result.region = aiData.region
             if (aiData.dateline) result.dateline = aiData.dateline
 

@@ -137,15 +137,6 @@ export interface Article {
    */
   slug?: string | null;
   excerpt: string;
-  /**
-   * Bullet points shown at the top of the story.
-   */
-  keyPoints?:
-    | {
-        point?: string | null;
-        id?: string | null;
-      }[]
-    | null;
   content?: {
     root: {
       type: string;
@@ -439,12 +430,6 @@ export interface ArticlesSelect<T extends boolean = true> {
   title?: T;
   slug?: T;
   excerpt?: T;
-  keyPoints?:
-    | T
-    | {
-        point?: T;
-        id?: T;
-      };
   content?: T;
   coverImage?: T;
   dateline?: T;

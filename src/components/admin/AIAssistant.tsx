@@ -9,7 +9,6 @@ interface AIResult {
   content?: string
   excerpt?: string
   tags?: string[]
-  keyPoints?: { point: string }[] | string[]
   region?: string
   dateline?: string
   isVideo?: boolean
@@ -187,7 +186,6 @@ export const AIAssistant: React.FC = () => {
     if (result.coverImage) applyField('coverImage', result.coverImage)
     if (result.excerpt) applyField('excerpt', result.excerpt)
     if (result.content) applyField('content', result.content)
-    if (result.keyPoints && result.keyPoints.length > 0) applyField('keyPoints', result.keyPoints)
     if (result.region) applyField('region', result.region)
     if (result.dateline) applyField('dateline', result.dateline)
     if (result.isVideo) applyField('isVideo', result.isVideo)

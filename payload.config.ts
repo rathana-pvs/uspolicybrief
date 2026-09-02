@@ -53,6 +53,18 @@ export default buildConfig({
       HeadingFeature({ enabledHeadingSizes: ['h1', 'h2', 'h3', 'h4'] }),
       FixedToolbarFeature(),
       HorizontalRuleFeature(),
+      UploadFeature({
+        collections: {
+          media: {
+            fields: [
+              {
+                name: 'caption',
+                type: 'text',
+              },
+            ],
+          },
+        },
+      }),
       BlocksFeature({
         blocks: [VideoEmbed],
       }),
