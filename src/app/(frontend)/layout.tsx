@@ -53,6 +53,12 @@ export default async function FrontendLayout({
 
   return (
     <html lang="en">
+      <head>
+        <script
+          src={`https://jsc.adskeeper.com/site/${process.env.NEXT_PUBLIC_ADS_KEEPER_SITE_ID || '1109794'}.js`}
+          async
+        />
+      </head>
       <body>
         <NavigationProgress />
         <Header />
@@ -70,7 +76,6 @@ export default async function FrontendLayout({
         {process.env.NEXT_PUBLIC_GA_ID && (
           <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
         )}
-        <Script src={`https://jsc.adskeeper.com/site/${process.env.NEXT_PUBLIC_ADS_KEEPER_SITE_ID || '1109794'}.js`} strategy="afterInteractive" />
       </body>
     </html>
   )
