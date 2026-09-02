@@ -7,6 +7,7 @@ import LiveBanner from '@/components/layout/LiveBanner'
 import Footer from '@/components/layout/Footer'
 import { GoogleAnalytics } from '@next/third-parties/google'
 import { NavigationProgress } from '@/components/layout/NavigationProgress'
+import { VisitorCounter } from '@/components/layout/VisitorCounter'
 import { getBreakingArticles } from '@/lib/api-server'
 
 const envUrl = process.env.NEXT_PUBLIC_SITE_URL
@@ -73,6 +74,7 @@ export default async function FrontendLayout({
           {children}
         </main>
         <Footer />
+        <VisitorCounter />
         {process.env.NEXT_PUBLIC_GA_ID && (
           <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
         )}

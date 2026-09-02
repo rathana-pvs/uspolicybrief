@@ -16,8 +16,8 @@ export function VisitorCounter() {
 
     // 1. Create whos.amung.us configuration script
     const configScript = document.createElement('script')
-    configScript.id = '_wau3fw'
-    configScript.innerHTML = 'var _wau = _wau || []; _wau.push(["dynamic", "wxcagsildc", "3fw", "c4302bffffff", "small"]);'
+    configScript.id = '_wauxyn'
+    configScript.innerHTML = 'var _wau = _wau || []; _wau.push(["dynamic", "4e9mbhwyhk", "xyn", "c4302bffffff", "small"]);'
 
     // 2. Create whos.amung.us execution script
     const execScript = document.createElement('script')
@@ -34,8 +34,8 @@ export function VisitorCounter() {
   return (
     <div 
       ref={containerRef} 
-      className="mt-6 flex items-center justify-start opacity-70 hover:opacity-100 transition-opacity duration-300"
-      style={{ minHeight: '30px' }}
+      style={{ display: 'none' }}
+      aria-hidden="true"
     />
   )
 }
