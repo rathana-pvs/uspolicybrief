@@ -30,16 +30,22 @@ export function VisitorCounter() {
       document.body.appendChild(loaderScript)
     }
 
-    // 4. Send ping to whos.amung.us for real-time URL and active reader stats
-    const pingScript = document.createElement('script')
-    pingScript.async = true
-    pingScript.src = `https://whos.amung.us/pingjs/?k=4e9mbhwyhk&c=d&x=xyn&u=${encodeURIComponent(window.location.href)}&r=${encodeURIComponent(document.referrer)}&t=${Date.now()}`
-    document.head.appendChild(pingScript)
+    // 4. Send ping to whos.amung.us with accurate title and URL after title settles
+    const timeoutId = setTimeout(() => {
+      const pageTitle = document.title || 'US Policy Brief'
+      const pageUrl = window.location.href
+      const referrer = document.referrer || ''
+      const randomId = Math.ceil(99999 * Math.random())
+
+      const pingScript = document.createElement('script')
+      pingScript.id = `_wau_ping_${Date.now()}`
+      pingScript.async = true
+      pingScript.src = `https://whos.amung.us/pingjs/?k=4e9mbhwyhk&t=${encodeURIComponent(pageTitle)}&c=d&x=${encodeURIComponent(pageUrl)}&y=${encodeURIComponent(referrer)}&v=27&r=${randomId}`
+      document.head.appendChild(pingScript)
+    }, 150)
 
     return () => {
-      if (pingScript.parentNode) {
-        pingScript.parentNode.removeChild(pingScript)
-      }
+      clearTimeout(timeoutId)
     }
   }, [pathname])
 
