@@ -13,6 +13,64 @@ function resolveUrl(baseUrl: string, relativeUrl: string): string {
   }
 }
 
+function normalizeText(t: string): string {
+  return (t || '')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#8217;|&#39;/g, "'")
+    .replace(/&#8220;|&#8221;/g, '"')
+    .replace(/&mdash;/g, '—')
+    .replace(/&ndash;/g, '–')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function normalizeForComparison(t: string): string {
+  return (t || '').toLowerCase().replace(/[^a-z0-9]/g, '')
+}
+
+function isJunkText(t: string): boolean {
+  if (!t) return true
+  const clean = normalizeText(t)
+  if (clean.length < 15) return true
+  const l = clean.toLowerCase()
+  return (
+    l.includes('email address will not be published') ||
+    l.includes('required fields are marked') ||
+    l.includes('save my name') ||
+    l.includes('leave a comment') ||
+    l.includes('leave a reply') ||
+    l.includes('comment section') ||
+    l.includes('cookie policy') ||
+    l.includes('cookie settings') ||
+    l.includes('all rights reserved') ||
+    l.includes('terms of service') ||
+    l.includes('privacy policy') ||
+    l.includes('subscribe to') ||
+    l.includes('sign up for') ||
+    l.includes('sign up to') ||
+    l.includes('newsletter') ||
+    l.startsWith('photo by') ||
+    l.startsWith('photo credit') ||
+    l.startsWith('image credit') ||
+    l.startsWith('image copyright') ||
+    l.startsWith('image source') ||
+    l.startsWith('read more:') ||
+    l.startsWith('also read:') ||
+    l.startsWith('related:') ||
+    l.startsWith('see also:') ||
+    l.startsWith('click here to') ||
+    l.includes('follow us on') ||
+    l.includes('join our telegram') ||
+    l.includes('join our whatsapp') ||
+    l.includes('advertisement') ||
+    l.includes('sponsored content')
+  )
+}
+
 async function scrapeUrlDirectly(url: string) {
   let targetUrl = url.trim()
   if (!/^https?:\/\//i.test(targetUrl)) {
@@ -37,7 +95,7 @@ async function scrapeUrlDirectly(url: string) {
               $('meta[name="twitter:title"]').attr('content') ||
               $('h1').first().text() ||
               $('title').text()
-  title = title?.trim() || ''
+  title = normalizeText(title)
   title = title
     .replace(/\s*–\s*arnewspost\.info$/i, '')
     .replace(/\s*-\s*arnewspost\.info$/i, '')
@@ -45,17 +103,23 @@ async function scrapeUrlDirectly(url: string) {
     .replace(/\s*-\s*instantlyfeed$/i, '')
     .replace(/\s*–\s*pulefeed$/i, '')
     .replace(/\s*-\s*pulefeed$/i, '')
+    .replace(/\s*[-–|•]\s*(?:BBC News|CNN|Reuters|AP News|Fox News|Politico|The Guardian|The New York Times|The Washington Post|Bloomberg|Forbes|Al Jazeera|arnewspost\.info|instantlyfeed|pulefeed|us\s*policy\s*brief)[\s\S]*$/i, '')
     .replace(/[…\.\s]+$/, '')
     .trim()
+
+  const cleanTitleNorm = normalizeForComparison(title)
 
   // 2. Extract Excerpt / Description
   let excerpt = $('meta[property="og:description"]').attr('content') ||
                 $('meta[name="twitter:description"]').attr('content') ||
                 $('meta[name="description"]').attr('content') ||
                 ''
-  excerpt = excerpt.trim()
+  excerpt = normalizeText(excerpt)
+  if (isJunkText(excerpt)) {
+    excerpt = ''
+  }
 
-  // 3. Extract main content tags in order
+  // 3. Extract main content container
   let container = $('.entry-content')
   if (container.length === 0) container = $('article')
   if (container.length === 0) container = $('main')
@@ -78,16 +142,57 @@ async function scrapeUrlDirectly(url: string) {
     container = $('body')
   }
 
+  // If container matches multiple elements, choose the one with the most paragraphs
+  if (container.length > 1) {
+    let maxP = 0
+    let bestContainer: any = container.first()
+    container.each((_, el) => {
+      const pCount = $(el).find('p').length
+      if (pCount > maxP) {
+        maxP = pCount
+        bestContainer = $(el)
+      }
+    })
+    container = bestContainer
+  }
+
+  // Strip noisy / non-article elements from container
+  container.find(
+    'header, footer, nav, aside, ' +
+    '.sidebar, #sidebar, .comments, #comments, .comment-respond, .comment-list, ' +
+    '.sharedaddy, .sd-sharing, .social-share, .share-buttons, .share-box, .social-buttons, ' +
+    '.related-posts, .related-articles, .jp-relatedposts, .wp-block-post-comments, ' +
+    '.author-bio, .author-box, .post-author, .about-author, .entry-author, ' +
+    '.advertisement, .ad-container, .ad, .ads, .banner, .addec, ' +
+    '.tag-cloud, .post-tags, .entry-meta, .post-meta, .entry-utility, ' +
+    'figcaption, .caption, .wp-caption-text, .image-caption, ' +
+    'script, style, noscript, svg, form, iframe[src*="doubleclick"], iframe[src*="googleads"]'
+  ).remove()
+
   const rawBlocks: any[] = []
+  const seenTexts = new Set<string>()
+  const seenMediaUrls = new Set<string>()
   
   function traverse(element: any) {
     const tag = element.tagName?.toLowerCase()
     if (!tag) return
 
-    // 1. Heading or long paragraph disguised as heading (common in WP themes)
+    // 1. Headings (h1 - h6)
     if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tag)) {
-      const text = $(element).text().trim()
+      const text = normalizeText($(element).text())
       if (text.length > 3) {
+        const textNorm = normalizeForComparison(text)
+        // Deduplicate: avoid repeating title in body
+        if (
+          textNorm === cleanTitleNorm ||
+          (cleanTitleNorm.length > 10 && (textNorm.startsWith(cleanTitleNorm.substring(0, 25)) || cleanTitleNorm.startsWith(textNorm.substring(0, 25))))
+        ) {
+          return
+        }
+        // Deduplicate: avoid repeating previously seen heading/paragraph
+        if (seenTexts.has(textNorm)) return
+        seenTexts.add(textNorm)
+
         if (text.length > 80 || text.split(/\s+/).length > 12) {
           rawBlocks.push({
             type: 'paragraph',
@@ -97,7 +202,7 @@ async function scrapeUrlDirectly(url: string) {
         } else {
           rawBlocks.push({
             type: 'heading',
-            tag: tag === 'h1' ? 'h2' : tag,
+            tag: tag === 'h1' ? 'h2' : (['h2', 'h3', 'h4'].includes(tag) ? tag : 'h3'),
             text
           })
         }
@@ -111,23 +216,31 @@ async function scrapeUrlDirectly(url: string) {
       const isTwitter = $(element).hasClass('twitter-tweet') || hasTwitterLink
       if (isTwitter) {
         const tweetLink = $(element).find('a[href*="twitter.com"], a[href*="x.com"]').attr('href') || ''
-        const text = $(element).text().trim()
+        const text = normalizeText($(element).text())
         if (tweetLink) {
-          rawBlocks.push({
-            type: 'twitter',
-            url: resolveUrl(url, tweetLink),
-            text
-          })
+          const resolvedTweet = resolveUrl(url, tweetLink)
+          if (!seenMediaUrls.has(resolvedTweet)) {
+            seenMediaUrls.add(resolvedTweet)
+            rawBlocks.push({
+              type: 'twitter',
+              url: resolvedTweet,
+              text
+            })
+          }
           return
         }
       }
 
-      const text = $(element).text().trim()
-      if (text.length > 5) {
-        rawBlocks.push({
-          type: 'quote',
-          text
-        })
+      const text = normalizeText($(element).text())
+      const textNorm = normalizeForComparison(text)
+      if (text.length > 5 && !seenTexts.has(textNorm)) {
+        if (textNorm !== cleanTitleNorm) {
+          seenTexts.add(textNorm)
+          rawBlocks.push({
+            type: 'quote',
+            text
+          })
+        }
       }
       return
     }
@@ -135,14 +248,20 @@ async function scrapeUrlDirectly(url: string) {
     // 3. List
     if (['ul', 'ol'].includes(tag)) {
       const items: string[] = []
-      $(element).find('li').each((_, li) => {
-        const liText = $(li).text().trim()
-        if (liText) items.push(liText)
+      $(element).find('> li, li').each((_, li) => {
+        const liText = normalizeText($(li).text())
+        if (liText && !isJunkText(liText)) {
+          const norm = normalizeForComparison(liText)
+          if (!seenTexts.has(norm)) {
+            seenTexts.add(norm)
+            items.push(liText)
+          }
+        }
       })
       if (items.length > 0) {
         rawBlocks.push({
           type: 'list',
-          tag,
+          tag: tag === 'ol' ? 'ol' : 'ul',
           items
         })
       }
@@ -151,7 +270,7 @@ async function scrapeUrlDirectly(url: string) {
 
     // 4. Image
     if (tag === 'img') {
-      const src = $(element).attr('src')
+      const src = $(element).attr('src') || $(element).attr('data-src') || $(element).attr('data-lazy-src')
       const alt = $(element).attr('alt')?.trim() || ''
       if (src) {
         const resolved = resolveUrl(url, src)
@@ -162,11 +281,13 @@ async function scrapeUrlDirectly(url: string) {
           !lowerSrc.includes('gravatar') && 
           !lowerSrc.includes('logo') && 
           !lowerSrc.includes('icon') && 
-          !lowerSrc.includes('spinner') &&
-          !lowerSrc.includes('loader') &&
-          !lowerSrc.includes('pixel') &&
-          !lowerSrc.includes('addec')
+          !lowerSrc.includes('spinner') && 
+          !lowerSrc.includes('loader') && 
+          !lowerSrc.includes('pixel') && 
+          !lowerSrc.includes('addec') &&
+          !seenMediaUrls.has(resolved)
         ) {
+          seenMediaUrls.add(resolved)
           rawBlocks.push({
             type: 'image',
             src: resolved,
@@ -182,19 +303,22 @@ async function scrapeUrlDirectly(url: string) {
       const src = $(element).attr('src')
       if (src) {
         const resolvedSrc = resolveUrl(url, src)
-        let videoSource: 'youtube' | 'facebook' | 'other' = 'other'
-        if (resolvedSrc.includes('youtube.com') || resolvedSrc.includes('youtu.be')) {
-          videoSource = 'youtube'
-        } else if (resolvedSrc.includes('facebook.com')) {
-          videoSource = 'facebook'
-        }
-        
-        if (videoSource !== 'other' || resolvedSrc.includes('embed') || resolvedSrc.includes('player')) {
-          rawBlocks.push({
-            type: 'video',
-            url: resolvedSrc,
-            source: videoSource
-          })
+        if (!seenMediaUrls.has(resolvedSrc)) {
+          let videoSource: 'youtube' | 'facebook' | 'other' = 'other'
+          if (resolvedSrc.includes('youtube.com') || resolvedSrc.includes('youtu.be')) {
+            videoSource = 'youtube'
+          } else if (resolvedSrc.includes('facebook.com')) {
+            videoSource = 'facebook'
+          }
+          
+          if (videoSource !== 'other' || resolvedSrc.includes('embed') || resolvedSrc.includes('player')) {
+            seenMediaUrls.add(resolvedSrc)
+            rawBlocks.push({
+              type: 'video',
+              url: resolvedSrc,
+              source: videoSource
+            })
+          }
         }
       }
       return
@@ -204,88 +328,132 @@ async function scrapeUrlDirectly(url: string) {
     if (tag === 'video') {
       const src = $(element).attr('src') || $(element).find('source').attr('src')
       if (src) {
-        rawBlocks.push({
-          type: 'video',
-          url: resolveUrl(url, src),
-          source: 'other'
-        })
+        const resolvedSrc = resolveUrl(url, src)
+        if (!seenMediaUrls.has(resolvedSrc)) {
+          seenMediaUrls.add(resolvedSrc)
+          rawBlocks.push({
+            type: 'video',
+            url: resolvedSrc,
+            source: 'other'
+          })
+        }
       }
       return
     }
 
     // 7. Paragraph
     if (tag === 'p') {
-      const text = $(element).text().trim()
-      const lower = text.toLowerCase()
+      const text = normalizeText($(element).text())
+      if (isJunkText(text)) return
+
+      const textNorm = normalizeForComparison(text)
+      // Deduplicate: avoid paragraph repeating title
       if (
-        text.length > 15 && 
-        !lower.includes('cookie') && 
-        !lower.includes('subscribe') && 
-        !lower.includes('sign up') && 
-        !lower.includes('newsletter') &&
-        !lower.includes('privacy policy') &&
-        !lower.includes('terms of service') &&
-        !lower.includes('all rights reserved')
+        textNorm === cleanTitleNorm ||
+        (cleanTitleNorm.length > 10 && textNorm.startsWith(cleanTitleNorm)) ||
+        (textNorm.length > 10 && cleanTitleNorm.startsWith(textNorm))
       ) {
-        const links = $(element).find('a')
-        if (links.length === 1 && text.length < 150) {
-          const href = links.attr('href') || ''
-          if (href.includes('twitter.com') || href.includes('x.com')) {
-            if (href.includes('/status/')) {
+        return
+      }
+
+      // Deduplicate: avoid duplicate paragraph
+      if (seenTexts.has(textNorm)) return
+      seenTexts.add(textNorm)
+
+      const links = $(element).find('a')
+      if (links.length === 1 && text.length < 150) {
+        const href = links.attr('href') || ''
+        if (href.includes('twitter.com') || href.includes('x.com')) {
+          if (href.includes('/status/')) {
+            const tweetUrl = resolveUrl(url, href)
+            if (!seenMediaUrls.has(tweetUrl)) {
+              seenMediaUrls.add(tweetUrl)
               rawBlocks.push({
                 type: 'twitter',
-                url: resolveUrl(url, href),
+                url: tweetUrl,
                 text
               })
               return
             }
-          } else if (href.includes('youtube.com/watch') || href.includes('youtu.be/')) {
+          }
+        } else if (href.includes('youtube.com/watch') || href.includes('youtu.be/')) {
+          const vidUrl = resolveUrl(url, href)
+          if (!seenMediaUrls.has(vidUrl)) {
+            seenMediaUrls.add(vidUrl)
             rawBlocks.push({
               type: 'video',
-              url: resolveUrl(url, href),
+              url: vidUrl,
               source: 'youtube'
             })
             return
           }
         }
+      }
 
-        const inlineChildren: any[] = []
-        $(element).contents().each((_, child) => {
-          if (child.type === 'text') {
-            const txt = child.data
-            if (txt) {
-              inlineChildren.push({ type: 'text', text: txt })
-            }
-          } else if (child.type === 'tag') {
-            const childTag = child.tagName.toLowerCase()
-            const childText = $(child).text()
-            if (childText) {
-              if (childTag === 'a') {
-                const href = $(child).attr('href')
-                inlineChildren.push({
-                  type: 'link',
-                  text: childText,
-                  url: href ? resolveUrl(url, href) : ''
-                })
-              } else if (['strong', 'b'].includes(childTag)) {
-                inlineChildren.push({
-                  type: 'text',
-                  text: childText,
-                  bold: true
-                })
-              } else if (['em', 'i'].includes(childTag)) {
-                inlineChildren.push({
-                  type: 'text',
-                  text: childText,
-                  italic: true
-                })
-              } else {
-                inlineChildren.push({ type: 'text', text: childText })
-              }
+      const inlineChildren: any[] = []
+      $(element).contents().each((_, child) => {
+        if (child.type === 'text') {
+          const txt = (child.data || '').replace(/\s+/g, ' ')
+          if (txt) {
+            inlineChildren.push({ type: 'text', text: txt })
+          }
+        } else if (child.type === 'tag') {
+          const childTag = child.tagName.toLowerCase()
+          const childText = normalizeText($(child).text())
+          if (childText) {
+            if (childTag === 'a') {
+              const href = $(child).attr('href')
+              inlineChildren.push({
+                type: 'link',
+                text: childText,
+                url: href ? resolveUrl(url, href) : ''
+              })
+            } else if (['strong', 'b'].includes(childTag)) {
+              inlineChildren.push({
+                type: 'text',
+                text: childText,
+                bold: true
+              })
+            } else if (['em', 'i'].includes(childTag)) {
+              inlineChildren.push({
+                type: 'text',
+                text: childText,
+                italic: true
+              })
+            } else {
+              inlineChildren.push({ type: 'text', text: childText })
             }
           }
-        })
+        }
+      })
 
+      // If a single paragraph is an unformatted giant wall (> 150 words), split cleanly by sentence
+      const wordCount = text.split(/\s+/).length
+      if (wordCount > 150 && inlineChildren.length <= 1) {
+        const sentences = text.match(/[^.!?]+[.!?]+(?:\s+|$)/g) || [text]
+        let currentPara = ''
+        for (const sent of sentences) {
+          if ((currentPara + sent).split(/\s+/).length > 60 && currentPara.length > 50) {
+            const pTrim = currentPara.trim()
+            rawBlocks.push({
+              type: 'paragraph',
+              text: pTrim,
+              children: [{ type: 'text', text: pTrim }]
+            })
+            currentPara = sent
+          } else {
+            currentPara += sent
+          }
+        }
+        if (currentPara.trim()) {
+          const pTrim = currentPara.trim()
+          rawBlocks.push({
+            type: 'paragraph',
+            text: pTrim,
+            children: [{ type: 'text', text: pTrim }]
+          })
+        }
+      } else {
         rawBlocks.push({
           type: 'paragraph',
           text,
@@ -304,15 +472,20 @@ async function scrapeUrlDirectly(url: string) {
     traverse(el)
   })
 
+  // Fallback if no paragraphs were found inside main container
   if (rawBlocks.filter(b => b.type === 'paragraph').length === 0) {
     $('p').each((_, el) => {
-      const text = $(el).text().trim()
-      if (text.length > 20) {
-        rawBlocks.push({
-          type: 'paragraph',
-          text,
-          children: [{ type: 'text', text }]
-        })
+      const text = normalizeText($(el).text())
+      if (!isJunkText(text) && text.length > 20) {
+        const textNorm = normalizeForComparison(text)
+        if (!seenTexts.has(textNorm) && textNorm !== cleanTitleNorm) {
+          seenTexts.add(textNorm)
+          rawBlocks.push({
+            type: 'paragraph',
+            text,
+            children: [{ type: 'text', text }]
+          })
+        }
       }
     })
   }
@@ -321,7 +494,8 @@ async function scrapeUrlDirectly(url: string) {
     .filter(b => b.type === 'paragraph')
     .map(b => b.text.replace(/\s+/g, ' ').trim())
   
-  const content = cleanParagraphs.slice(0, 30).join('\n\n')
+  // Full text preserved without arbitrary caps
+  const content = cleanParagraphs.join('\n\n')
 
   let tags: string[] = []
   const keywords = $('meta[name="keywords"]').attr('content')
@@ -332,7 +506,7 @@ async function scrapeUrlDirectly(url: string) {
       .toLowerCase()
       .replace(/[^a-z0-9\s]/g, '')
       .split(/\s+/)
-      .filter(w => w.length > 4 && !['about', 'after', 'before', 'their', 'there', 'these', 'would', 'instantlyfeed'].includes(w))
+      .filter(w => w.length > 4 && !['about', 'after', 'before', 'their', 'there', 'these', 'would', 'instantlyfeed', 'policy', 'brief'].includes(w))
       .slice(0, 4)
   }
 
@@ -357,7 +531,7 @@ async function scrapeUrlDirectly(url: string) {
           !resolved.includes('gravatar') && 
           !resolved.includes('logo') && 
           !resolved.includes('icon') && 
-          !resolved.includes('spinner') &&
+          !resolved.includes('spinner') && 
           !resolved.includes('loader')
         ) {
           foundImg = resolved
@@ -377,7 +551,7 @@ async function scrapeUrlDirectly(url: string) {
             !resolved.includes('gravatar') && 
             !resolved.includes('logo') && 
             !resolved.includes('icon') && 
-            !resolved.includes('spinner') &&
+            !resolved.includes('spinner') && 
             !resolved.includes('loader')
           ) {
             foundImg = resolved
@@ -387,26 +561,6 @@ async function scrapeUrlDirectly(url: string) {
       })
     }
     scrapedImageUrl = foundImg
-  }
-
-  // Filter out generic boilerplate comment form strings
-  const isJunkText = (t: string) => {
-    if (!t) return true
-    const l = t.toLowerCase()
-    return (
-      l.includes('email address will not be published') ||
-      l.includes('required fields are marked') ||
-      l.includes('save my name') ||
-      l.includes('leave a comment') ||
-      l.includes('leave a reply') ||
-      l.includes('comment section') ||
-      l.includes('cookie policy') ||
-      l.includes('all rights reserved')
-    )
-  }
-
-  if (isJunkText(excerpt)) {
-    excerpt = ''
   }
 
   // Clean excerpt if it duplicates title at start
@@ -423,7 +577,7 @@ async function scrapeUrlDirectly(url: string) {
     const cleanT = title.trim().toLowerCase()
     const prefix = cleanT.substring(0, Math.min(25, cleanT.length))
     const filteredBlocks = rawBlocks.filter((block: any, idx: number) => {
-      if (idx >= 3) return true
+      if (idx >= 5) return true
       const bText = (block.text || '').trim().toLowerCase()
       if (!bText) return true
       if (
@@ -439,14 +593,34 @@ async function scrapeUrlDirectly(url: string) {
     rawBlocks.push(...filteredBlocks)
   }
 
-  const metaTitle = title.endsWith(' - InstantlyFeed') ? title : `${title.substring(0, 45)} - InstantlyFeed`
-  const fallbackParagraph = cleanParagraphs.find(p => !isJunkText(p) && p.length > 40) || content
-  const finalExcerpt = (excerpt && !isJunkText(excerpt)) ? excerpt : (fallbackParagraph.length > 200 ? fallbackParagraph.substring(0, 200) + '...' : fallbackParagraph)
+  const siteName = process.env.NEXT_PUBLIC_SITE_NAME || 'US Policy Brief'
+  const metaTitle = title.endsWith(` - ${siteName}`) ? title : `${title.substring(0, 45)} - ${siteName}`
+  
+  // Clean fallback excerpt from first clean paragraph (strictly under 160 chars)
+  const firstParagraph = cleanParagraphs.find(p => !isJunkText(p) && p.length > 25) || content
+  let fallbackExcerpt = firstParagraph
+  if (title && fallbackExcerpt.toLowerCase().startsWith(title.toLowerCase())) {
+    fallbackExcerpt = fallbackExcerpt.substring(title.length).replace(/^[\s:\-–—\.\,\!]+/, '').trim()
+  }
+  if (fallbackExcerpt.length > 155) {
+    fallbackExcerpt = fallbackExcerpt.substring(0, 155)
+    const lastPeriod = fallbackExcerpt.lastIndexOf('.')
+    if (lastPeriod > 80) {
+      fallbackExcerpt = fallbackExcerpt.substring(0, lastPeriod + 1).trim()
+    } else {
+      const lastSpace = fallbackExcerpt.lastIndexOf(' ')
+      if (lastSpace > 80) {
+        fallbackExcerpt = fallbackExcerpt.substring(0, lastSpace).trim() + '...'
+      }
+    }
+  }
+
+  const finalExcerpt = (excerpt && !isJunkText(excerpt)) ? excerpt : fallbackExcerpt
   
   let rawMetaDesc = $('meta[property="og:description"]').attr('content') ||
                     $('meta[name="twitter:description"]').attr('content') ||
                     $('meta[name="description"]').attr('content') || ''
-  rawMetaDesc = rawMetaDesc.trim()
+  rawMetaDesc = normalizeText(rawMetaDesc)
   if (isJunkText(rawMetaDesc)) {
     rawMetaDesc = ''
   }
@@ -1013,13 +1187,18 @@ export async function POST(req: NextRequest) {
         return true
       })
 
-      // 5. Generate intelligent Gemini AI summary content & metadata adhering to strict editorial rules
+      // 5. Build Lexical JSON rich text from the full deduped blocks in natural order
+      // (paragraphs, subheadings, images, videos, twitter embeds, quotes, lists)
+      // Preserves full text without summarization or artificial caps.
+      result.content = buildLexicalJson(dedupedBlocks)
+
+      // 6. Generate intelligent Gemini AI metadata (excerpt, tags, region, dateline, SEO) adhering to editorial rules
       if (process.env.GOOGLE_GENERATIVE_AI_API_KEY && result.title) {
         try {
-          const rawParagraphsText = blocks
+          const rawParagraphsText = dedupedBlocks
             .filter((b: any) => b.type === 'paragraph')
             .map((b: any) => b.text)
-            .slice(0, 10)
+            .slice(0, 15)
             .join('\n\n')
 
           if (rawParagraphsText.length > 50) {
@@ -1029,16 +1208,17 @@ export async function POST(req: NextRequest) {
               result.videoDuration = '03:45'
             }
 
-            const aiPrompt = `Given the news article title "${result.title}" and text content:\n"${rawParagraphsText.substring(0, 2000)}"\n\nSummarize and reformat into a complete news summary adhering strictly to these rules:
-1. "excerpt": A punchy, high-engagement lead summary strictly under 160 characters.
-2. "content": Summary body of EXACTLY 4 short paragraphs (no H2/H3 subheadings). Total word count MUST be strictly between 120 and 140 words. Each paragraph MUST be at most 35 words long. Do NOT duplicate title.
-3. "region": One of ["world", "europe", "asia", "us-canada", "middle-east", "latin-america", "africa"].
-4. "dateline": Uppercase city name of the news origin (e.g. "LONDON", "GENEVA", "WASHINGTON", "TOKYO").
-5. "tags": ["3-5 relevant lowercase tags"]
-6. "metaTitle": SEO title strictly 50-60 characters.
-7. "metaDescription": SEO meta description strictly 100-150 characters.
+            const siteName = process.env.NEXT_PUBLIC_SITE_NAME || 'US Policy Brief'
 
-Return valid JSON with exact keys: { "excerpt", "content", "region", "dateline", "tags", "metaTitle", "metaDescription" }`
+            const aiPrompt = `Given the news article title "${result.title}" and context:\n"${rawParagraphsText.substring(0, 3000)}"\n\nGenerate article metadata strictly following these rules:
+1. "excerpt": A punchy, high-engagement lead summary strictly under 160 characters. Do NOT repeat or duplicate the title.
+2. "region": One of ["world", "europe", "asia", "us-canada", "middle-east", "latin-america", "africa"].
+3. "dateline": Uppercase city name of the news origin (e.g. "LONDON", "GENEVA", "WASHINGTON", "TOKYO").
+4. "tags": ["3-5 relevant lowercase tags"].
+5. "metaTitle": SEO title strictly 50-60 characters ending with - ${siteName}.
+6. "metaDescription": SEO meta description strictly 100-150 characters.
+
+Return valid JSON with exact keys: { "excerpt", "region", "dateline", "tags", "metaTitle", "metaDescription" }`
 
             const rawText = await generateAiText(SYSTEM_PROMPT, aiPrompt)
             const aiData = extractJsonFromText(rawText)
@@ -1049,30 +1229,10 @@ Return valid JSON with exact keys: { "excerpt", "content", "region", "dateline",
             if (aiData.metaDescription) result.metaDescription = aiData.metaDescription
             if (aiData.region) result.region = aiData.region
             if (aiData.dateline) result.dateline = aiData.dateline
-
-            if (aiData.content && typeof aiData.content === 'string') {
-              const aiParagraphs = aiData.content
-                .split(/\n\s*\n/)
-                .map((p: string) => p.trim())
-                .filter(Boolean)
-
-              // Build Lexical JSON blocks from AI summarized 4 paragraphs + non-text media (images/videos)
-              const mediaBlocks = dedupedBlocks.filter((b: any) => b.type !== 'paragraph' && b.type !== 'heading')
-              const summaryBlocks = [
-                ...aiParagraphs.map((pText: string) => ({ type: 'paragraph', text: pText, children: [{ type: 'text', text: pText }] })),
-                ...mediaBlocks
-              ]
-              result.content = buildLexicalJson(summaryBlocks)
-            }
           }
-        } catch (aiSummaryErr) {
-          console.warn('[Import Summary AI Warning]', aiSummaryErr)
-          // Fallback to raw blocks if AI fails
-          result.content = buildLexicalJson(dedupedBlocks)
+        } catch (aiMetadataErr) {
+          console.warn('[Import Metadata AI Warning]', aiMetadataErr)
         }
-      } else {
-        // Fallback to raw blocks if no API key
-        result.content = buildLexicalJson(dedupedBlocks)
       }
       delete result.blocks
 
@@ -1177,9 +1337,16 @@ function enforceSeoLimits(seoData: any) {
     }
   }
 
-  // 3. Lead Excerpt: strictly under 160 characters
+  // 3. Lead Excerpt: strictly under 160 characters (and no title duplication)
   if (seoData.excerpt && typeof seoData.excerpt === 'string') {
     let excerpt = seoData.excerpt.trim()
+    if (seoData.title && typeof seoData.title === 'string') {
+      const cleanT = seoData.title.trim().toLowerCase()
+      const prefix = cleanT.substring(0, Math.min(25, cleanT.length))
+      if (excerpt.toLowerCase().startsWith(prefix)) {
+        excerpt = excerpt.substring(seoData.title.length).replace(/^[\s:\-–—\.\,\!]+/, '').trim()
+      }
+    }
     if (excerpt.length > 160) {
       excerpt = excerpt.substring(0, 160)
       const lastPeriod = excerpt.lastIndexOf('.')
@@ -1191,8 +1358,8 @@ function enforceSeoLimits(seoData: any) {
           excerpt = excerpt.substring(0, lastSpace).trim() + '...'
         }
       }
-      seoData.excerpt = excerpt
     }
+    seoData.excerpt = excerpt
   }
   return seoData
 }

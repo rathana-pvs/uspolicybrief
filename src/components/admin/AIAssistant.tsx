@@ -160,7 +160,7 @@ export const AIAssistant: React.FC = () => {
         }
 
         lexicalValue.root.children = lexicalValue.root.children.filter((node: any, idx: number) => {
-          if (idx >= 3) return true
+          if (idx >= 5) return true
           const text = getNodeText(node).trim().toLowerCase()
           if (!text) return true
           if (
@@ -575,10 +575,29 @@ export const AIAssistant: React.FC = () => {
                 {result.excerpt && (
                   <ResultCard label="Excerpt" value={result.excerpt} applied={!!applied['excerpt']} onApply={() => applyField('excerpt', result.excerpt)} />
                 )}
-                 {result.content && (
+                {result.content && (
                   <ResultCard 
                     label="Article Content" 
-                    value={typeof result.content === 'string' ? result.content.substring(0, 160) + '...' : 'Beautifully formatted rich text (including paragraphs, headings, blockquotes, lists, images, and videos)'} 
+                    value={
+                      typeof result.content === 'string'
+                        ? (result.content.length > 160 ? result.content.substring(0, 160) + '...' : result.content)
+                        : (() => {
+                            const children = (result.content as any)?.root?.children || []
+                            const pCount = children.filter((c: any) => c.type === 'paragraph').length
+                            const hCount = children.filter((c: any) => c.type === 'heading').length
+                            const imgCount = children.filter((c: any) => c.type === 'upload').length
+                            const vidCount = children.filter((c: any) => c.type === 'block' && c.fields?.blockType === 'videoEmbed').length
+                            const quoteCount = children.filter((c: any) => c.type === 'quote').length
+                            const listCount = children.filter((c: any) => c.type === 'list').length
+                            const parts = [`${pCount} paragraphs`]
+                            if (hCount > 0) parts.push(`${hCount} subheadings`)
+                            if (imgCount > 0) parts.push(`${imgCount} inline images`)
+                            if (vidCount > 0) parts.push(`${vidCount} video embeds`)
+                            if (quoteCount > 0) parts.push(`${quoteCount} quotes`)
+                            if (listCount > 0) parts.push(`${listCount} lists`)
+                            return `Full Article: ${parts.join(', ')} (formatted rich text)`
+                          })()
+                    } 
                     applied={!!applied['content']} 
                     onApply={() => applyField('content', result.content)} 
                   />
