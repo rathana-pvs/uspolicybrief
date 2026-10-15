@@ -14,6 +14,7 @@ export type RichTextProps = {
   adWidgetId3?: string           // Lower in-article ad (lower ad in expanded section)
   underArticleWidgetId?: string  // Under-article native ad grid
   feedWidgetId?: string          // Feed widget
+  showPrimaryAd?: boolean        // Render the primary widget inside the article body
 }
 
 function extractNodeText(node: any): string {
@@ -35,6 +36,7 @@ export const RichText = ({
   adWidgetId3,
   underArticleWidgetId,
   feedWidgetId,
+  showPrimaryAd = true,
 }: RichTextProps) => {
   const [isExpanded, setIsExpanded] = useState(false)
 
@@ -88,7 +90,7 @@ export const RichText = ({
     return (
       <div className={`rich-text ${className || ''}`}>
         {serializeLexical(nodes, 'full')}
-        {primaryWidgetId && (
+        {showPrimaryAd && primaryWidgetId && (
           <div className="my-6 w-full flex justify-center items-center">
             <AdskeeperWidget widgetId={primaryWidgetId} className="!my-0" />
           </div>
@@ -106,7 +108,7 @@ export const RichText = ({
       {serializeLexical(topNodes, 'top')}
 
       {/* Ad after Paragraph 1 */}
-      {primaryWidgetId && (
+      {showPrimaryAd && primaryWidgetId && (
         <div className="my-6 w-full flex justify-center items-center">
           <AdskeeperWidget widgetId={primaryWidgetId} className="!my-0" />
         </div>

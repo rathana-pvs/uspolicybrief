@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import Script from 'next/script'
 import '@/app/globals.css'
 import Header from '@/components/layout/Header'
 import Navigation from '@/components/layout/Navigation'
@@ -54,12 +53,6 @@ export default async function FrontendLayout({
 
   return (
     <html lang="en">
-      <head>
-        <script
-          src={`https://jsc.adskeeper.com/site/${process.env.NEXT_PUBLIC_ADS_KEEPER_SITE_ID || '1109794'}.js`}
-          async
-        />
-      </head>
       <body>
         <NavigationProgress />
         <Header />

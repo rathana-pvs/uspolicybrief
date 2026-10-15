@@ -104,7 +104,6 @@ export default async function ArticlePage({ params }: PageProps) {
   const widgetSidebar = process.env.NEXT_PUBLIC_ADS_KEEPER_WIDGET_SIDEBAR || '2076627'
   const widgetInArticle1 = process.env.NEXT_PUBLIC_ADS_KEEPER_WIDGET_IN_ARTICLE_1 || '2076626'
   const widgetInArticle2 = process.env.NEXT_PUBLIC_ADS_KEEPER_WIDGET_IN_ARTICLE_2 || ''
-  const widgetUnderArticle = process.env.NEXT_PUBLIC_ADS_KEEPER_WIDGET_UNDER_ARTICLE || ''
   const widgetFeed = process.env.NEXT_PUBLIC_ADS_KEEPER_WIDGET_FEED || '2076625'
 
   const jsonLd = {
@@ -186,6 +185,13 @@ export default async function ArticlePage({ params }: PageProps) {
             {/* Executive Summary (Excerpt & Key Points) */}
             <ExecutiveSummary excerpt={article.excerpt} keyPoints={keyPoints} />
 
+            {/* Keep one revenue unit close to the initial reading viewport. */}
+            {widgetInArticle1 && (
+              <section className="article-priority-ad" aria-label="Sponsored content">
+                <AdskeeperWidget widgetId={widgetInArticle1} className="!my-0" />
+              </section>
+            )}
+
             {/* Article Content with In-Article Native Ads */}
             <div className="article-prose">
               {article.content ? (
@@ -195,6 +201,7 @@ export default async function ArticlePage({ params }: PageProps) {
                   adWidgetId={widgetInArticle1}
                   adWidgetId2={widgetInArticle2}
                   feedWidgetId={widgetFeed}
+                  showPrimaryAd={false}
                 />
               ) : (
                 <p>{article.excerpt}</p>
@@ -210,12 +217,12 @@ export default async function ArticlePage({ params }: PageProps) {
           </div>
 
           <aside className="article-sidebar">
-            <MostRead articles={allArticles} limit={6} />
             {widgetSidebar && (
-              <div className="mt-4 mb-6 sticky top-20">
+              <section className="mb-6 sticky top-20" aria-label="Sponsored content">
                 <AdskeeperWidget widgetId={widgetSidebar} adType="sidebar" />
-              </div>
+              </section>
             )}
+            <MostRead articles={allArticles} limit={6} />
             {relatedArticles.length > 0 && (
               <section className="related-block" aria-labelledby="related-heading">
                 <h2 id="related-heading">Related</h2>

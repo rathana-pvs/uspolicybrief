@@ -9,6 +9,26 @@ interface AdskeeperWidgetProps {
   onlyShowOn?: string
 }
 
+// React mounts sibling widgets in the same commit. Queue one Adskeeper scan for
+// that commit instead of making every widget rescan all slots on the page. A
+// widget mounted later (for example after "Continue Reading") schedules a new
+// scan, so dynamically revealed placements still load.
+let adskeeperLoadScheduled = false
+
+function scheduleAdskeeperLoad() {
+  if (adskeeperLoadScheduled || typeof window === 'undefined') return
+
+  adskeeperLoadScheduled = true
+  window.requestAnimationFrame(() => {
+    try {
+      window._mgq = window._mgq || []
+      window._mgq.push(['_mgc.load'])
+    } finally {
+      adskeeperLoadScheduled = false
+    }
+  })
+}
+
 // Simulated clickbait-style native advertisement mock data
 const MOCK_ADS = [
   {
@@ -73,10 +93,6 @@ const MOCK_ADS = [
   }
 ]
 
-// Module-level flag: _mgc.load must only fire ONCE per page session.
-// Calling it per-widget causes Adskeeper to treat the second+ calls as
-// duplicates and silently skip already-scanned slots (e.g. widget 2044156).
-// Instead, the FIRST widget to enter the viewport triggers the global scan;
 export default function AdskeeperWidget({ widgetId, className = '', adType, onlyShowOn }: AdskeeperWidgetProps) {
   if (!widgetId) return null
 
@@ -101,10 +117,7 @@ export default function AdskeeperWidget({ widgetId, className = '', adType, only
     if (onlyShowOn === 'desktop' && !window.matchMedia('(min-width: 1024px)').matches) return
 
     try {
-      if (typeof window !== 'undefined') {
-        window._mgq = window._mgq || []
-        window._mgq.push(['_mgc.load'])
-      }
+      scheduleAdskeeperLoad()
     } catch (e) {
       console.error('Adskeeper load error:', e)
     }
