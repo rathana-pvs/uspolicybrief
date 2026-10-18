@@ -71,11 +71,76 @@ function isJunkText(t: string): boolean {
   )
 }
 
+async function fetchPayloadArticle(targetUrl: string): Promise<any | null> {
+  try {
+    const parsedUrl = new URL(targetUrl)
+    const articleMatch = parsedUrl.pathname.match(/^\/article\/(.+?)\/?$/i)
+    if (!articleMatch) return null
+
+    const slug = decodeURIComponent(articleMatch[1])
+    const apiUrl = new URL('/api/articles', parsedUrl.origin)
+    apiUrl.searchParams.set('where[slug][equals]', slug)
+    apiUrl.searchParams.set('depth', '2')
+    apiUrl.searchParams.set('limit', '1')
+
+    const apiRes = await fetch(apiUrl, {
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'USPolicyBrief Article Importer/1.0',
+      },
+    })
+    if (!apiRes.ok) return null
+
+    const apiData = await apiRes.json()
+    const article = apiData?.docs?.[0]
+    const lexicalContent = article?.content
+    if (!article || !Array.isArray(lexicalContent?.root?.children) || lexicalContent.root.children.length === 0) {
+      return null
+    }
+
+    const image = article.coverImage || article.og?.ogImage || article.meta?.image
+    const imageUrl = typeof image === 'string'
+      ? image
+      : image?.url || image?.externalUrl || ''
+
+    return {
+      title: normalizeText(article.title || ''),
+      content: lexicalContent,
+      excerpt: normalizeText(article.excerpt || article.og?.metaDescription || article.meta?.description || ''),
+      tags: Array.isArray(article.tags)
+        ? article.tags
+            .map((tag: any) => normalizeText(typeof tag === 'string' ? tag : tag?.tag || tag?.name || ''))
+            .filter(Boolean)
+            .slice(0, 5)
+        : [],
+      region: article.region || undefined,
+      dateline: article.dateline || undefined,
+      isVideo: Boolean(article.isVideo),
+      videoDuration: article.videoDuration || undefined,
+      metaTitle: normalizeText(article.og?.metaTitle || article.meta?.title || article.title || ''),
+      metaDescription: normalizeText(article.og?.metaDescription || article.meta?.description || article.excerpt || ''),
+      scrapedImageUrl: imageUrl ? resolveUrl(targetUrl, imageUrl) : '',
+      blocks: [],
+      importedStructuredContent: true,
+    }
+  } catch (error) {
+    console.warn('[Import] Structured article lookup failed; falling back to HTML scraping.', error)
+    return null
+  }
+}
+
 async function scrapeUrlDirectly(url: string) {
   let targetUrl = url.trim()
   if (!/^https?:\/\//i.test(targetUrl)) {
     targetUrl = `https://${targetUrl}`
   }
+
+  // Payload/Next article pages may render only a short preview in the HTML while
+  // keeping the complete Lexical document in page data. Prefer the public Payload
+  // API for those URLs so re-importing one of our own articles preserves every
+  // paragraph and heading. Other sites continue through the generic HTML scraper.
+  const structuredArticle = await fetchPayloadArticle(targetUrl)
+  if (structuredArticle) return structuredArticle
 
   const res = await fetch(targetUrl, {
     headers: {
@@ -1190,7 +1255,9 @@ export async function POST(req: NextRequest) {
       // 5. Build Lexical JSON rich text from the full deduped blocks in natural order
       // (paragraphs, subheadings, images, videos, twitter embeds, quotes, lists)
       // Preserves full text without summarization or artificial caps.
-      result.content = buildLexicalJson(dedupedBlocks)
+      if (!result.importedStructuredContent) {
+        result.content = buildLexicalJson(dedupedBlocks)
+      }
 
       // 6. Generate intelligent Gemini AI metadata (excerpt, tags, region, dateline, SEO) adhering to editorial rules
       if (process.env.GOOGLE_GENERATIVE_AI_API_KEY && result.title) {
@@ -1235,6 +1302,7 @@ Return valid JSON with exact keys: { "excerpt", "region", "dateline", "tags", "m
         }
       }
       delete result.blocks
+      delete result.importedStructuredContent
 
       const enforced = enforceSeoLimits(result)
       return NextResponse.json({ success: true, data: enforced })
